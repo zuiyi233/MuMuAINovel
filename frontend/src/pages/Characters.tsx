@@ -10,6 +10,7 @@ import type { Character, ApiError } from '../types';
 import { characterApi } from '../services/api';
 import { SSEPostClient } from '../utils/sseClient';
 import api from '../services/api';
+import { syncProjectShadow } from '../utils/shadowSync';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -157,6 +158,16 @@ export default function Characters() {
       setProgress(0);
       setProgressMessage('准备生成角色...');
 
+      try {
+        await syncProjectShadow(currentProject.id);
+      } catch {
+        message.error('同步失败，请重试');
+        setIsGenerating(false);
+        setProgress(0);
+        setProgressMessage('');
+        return;
+      }
+
       const client = new SSEPostClient(
         '/api/characters/generate-stream',
         {
@@ -209,6 +220,16 @@ export default function Characters() {
       setIsGenerating(true);
       setProgress(0);
       setProgressMessage('准备生成组织...');
+
+      try {
+        await syncProjectShadow(currentProject.id);
+      } catch {
+        message.error('同步失败，请重试');
+        setIsGenerating(false);
+        setProgress(0);
+        setProgressMessage('');
+        return;
+      }
 
       const client = new SSEPostClient(
         '/api/organizations/generate-stream',
