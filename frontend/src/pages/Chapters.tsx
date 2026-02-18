@@ -4,6 +4,7 @@ import { EditOutlined, FileTextOutlined, ThunderboltOutlined, LockOutlined, Down
 import { useStore } from '../store';
 import { useChapterSync } from '../store/hooks';
 import { projectApi, writingStyleApi, chapterApi } from '../services/api';
+import { syncProjectShadow } from '../utils/shadowSync';
 import type { Chapter, ChapterUpdate, ApiError, WritingStyle, AnalysisTask, ExpansionPlanData } from '../types';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
 import ChapterAnalysis from '../components/ChapterAnalysis';
@@ -984,6 +985,15 @@ export default function Chapters() {
     }
 
     try {
+      try {
+        await syncProjectShadow(currentProject.id);
+      } catch (error) {
+        console.error('shadow sync failed:', error);
+        message.error('Sync failed, please retry');
+        setBatchGenerating(false);
+        return;
+      }
+
       setBatchGenerating(true);
       setBatchGenerateVisible(false); // 关闭配置对话框，避免遮挡进度弹窗
 

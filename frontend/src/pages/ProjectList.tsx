@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Modal, message, Spin, Space, Tag, Progress, Typography, Alert, Upload, Checkbox, Tooltip, Drawer, Menu } from 'antd';
 import { EditOutlined, DeleteOutlined, BookOutlined, RocketOutlined, CalendarOutlined, FileTextOutlined, TrophyOutlined, SettingOutlined, UploadOutlined, DownloadOutlined, ApiOutlined, BulbOutlined, LoadingOutlined, FileSearchOutlined, MenuUnfoldOutlined, CloseOutlined } from '@ant-design/icons';
-import { projectApi } from '../services/api';
+import { exportLocalBackup, importLocalBackupReplace, validateLocalBackupFile } from '../utils/localBackup';
 import { useStore } from '../store';
 import { useProjectSync } from '../store/hooks';
 import { eventBus, EventNames } from '../store/eventBus';
@@ -51,13 +51,6 @@ export default function ProjectList() {
   const [validating, setValidating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
-  const [exportOptions, setExportOptions] = useState({
-    includeWritingStyles: true,
-    includeGenerationHistory: false,
-    includeCareers: true,
-    includeMemories: false,
-    includePlotAnalysis: false,
-  });
   const { refreshProjects, deleteProject } = useProjectSync();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -185,7 +178,7 @@ export default function ProjectList() {
     setValidationResult(null);
     try {
       setValidating(true);
-      const result = await projectApi.validateImportFile(file);
+      const result = await validateLocalBackupFile(file);
       setValidationResult(result);
       if (!result.valid) {
         message.error('文件验证失败');
@@ -201,27 +194,26 @@ export default function ProjectList() {
 
   const handleImport = async () => {
     if (!selectedFile || !validationResult?.valid) {
-      message.warning('请选择有效的导入文件');
+      message.warning('Please select a valid backup file');
       return;
     }
     try {
       setImporting(true);
-      const result = await projectApi.importProject(selectedFile);
-      if (result.success) {
-        message.success(`项目导入成功！${result.message}`);
-        setImportModalVisible(false);
-        setSelectedFile(null);
-        setValidationResult(null);
-        await refreshProjects();
-        if (result.project_id) {
-          navigate(`/project/${result.project_id}`);
-        }
-      } else {
-        message.error(result.message || '导入失败');
+      const result = await importLocalBackupReplace(selectedFile);
+      if (!result.success) {
+        throw new Error(result.message || 'Import failed');
+      }
+      message.success(result.message);
+      setImportModalVisible(false);
+      setSelectedFile(null);
+      setValidationResult(null);
+      await refreshProjects();
+      if (result.project_ids.length === 1) {
+        navigate(`/project/${result.project_ids[0]}`);
       }
     } catch (error) {
-      console.error('导入失败:', error);
-      message.error('导入失败，请重试');
+      console.error('Import failed:', error);
+      message.error('Import failed, please retry');
     } finally {
       setImporting(false);
     }
@@ -263,51 +255,17 @@ export default function ProjectList() {
 
   const handleExport = async () => {
     if (selectedProjectIds.length === 0) {
-      message.warning('请至少选择一个项目');
+      message.warning('Please select at least one project');
       return;
     }
     try {
       setExporting(true);
-      if (selectedProjectIds.length === 1) {
-        const projectId = selectedProjectIds[0];
-        const project = projects.find(p => p.id === projectId);
-        await projectApi.exportProjectData(projectId, {
-          include_generation_history: exportOptions.includeGenerationHistory,
-          include_writing_styles: exportOptions.includeWritingStyles,
-          include_careers: exportOptions.includeCareers,
-          include_memories: exportOptions.includeMemories,
-          include_plot_analysis: exportOptions.includePlotAnalysis
-        });
-        message.success(`项目 "${project?.title}" 导出成功`);
-      } else {
-        let successCount = 0;
-        let failCount = 0;
-        for (const projectId of selectedProjectIds) {
-          try {
-            await projectApi.exportProjectData(projectId, {
-              include_generation_history: exportOptions.includeGenerationHistory,
-              include_writing_styles: exportOptions.includeWritingStyles,
-              include_careers: exportOptions.includeCareers,
-              include_memories: exportOptions.includeMemories,
-              include_plot_analysis: exportOptions.includePlotAnalysis
-            });
-            successCount++;
-            await new Promise(resolve => setTimeout(resolve, 500));
-          } catch (error) {
-            console.error(`导出项目 ${projectId} 失败:`, error);
-            failCount++;
-          }
-        }
-        if (failCount === 0) {
-          message.success(`成功导出 ${successCount} 个项目`);
-        } else {
-          message.warning(`导出完成：成功 ${successCount} 个，失败 ${failCount} 个`);
-        }
-      }
+      const result = await exportLocalBackup(selectedProjectIds);
+      message.success(`Export completed: ${result.filename}`);
       handleCloseExportModal();
     } catch (error) {
-      console.error('导出失败:', error);
-      message.error('导出失败，请重试');
+      console.error('Export failed:', error);
+      message.error('Export failed, please retry');
     } finally {
       setExporting(false);
     }
@@ -1198,24 +1156,6 @@ export default function ProjectList() {
         okButtonProps={{ disabled: selectedProjectIds.length === 0 }}
       >
          <Space direction="vertical" size={16} style={{ width: '100%' }}>
-            <Card size="small" style={{ background: '#f5f5f5' }}>
-              <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                <Text strong>导出选项</Text>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px' }}>
-                  <Checkbox checked={exportOptions.includeWritingStyles} onChange={e => setExportOptions(prev => ({...prev, includeWritingStyles: e.target.checked}))}>写作风格</Checkbox>
-                  <Checkbox checked={exportOptions.includeCareers} onChange={e => setExportOptions(prev => ({...prev, includeCareers: e.target.checked}))}>职业系统</Checkbox>
-                  <Tooltip title="包含生成历史记录，文件可能较大">
-                    <Checkbox checked={exportOptions.includeGenerationHistory} onChange={e => setExportOptions(prev => ({...prev, includeGenerationHistory: e.target.checked}))}>生成历史</Checkbox>
-                  </Tooltip>
-                  <Tooltip title="包含故事记忆数据，文件可能较大">
-                    <Checkbox checked={exportOptions.includeMemories} onChange={e => setExportOptions(prev => ({...prev, includeMemories: e.target.checked}))}>故事记忆</Checkbox>
-                  </Tooltip>
-                  <Tooltip title="包含AI剧情分析数据">
-                    <Checkbox checked={exportOptions.includePlotAnalysis} onChange={e => setExportOptions(prev => ({...prev, includePlotAnalysis: e.target.checked}))}>剧情分析</Checkbox>
-                  </Tooltip>
-                </div>
-              </Space>
-            </Card>
 
             <div>
                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>

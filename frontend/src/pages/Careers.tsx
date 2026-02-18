@@ -4,6 +4,7 @@ import { ThunderboltOutlined, PlusOutlined, EditOutlined, DeleteOutlined, Trophy
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import SSEProgressModal from '../components/SSEProgressModal';
+import { syncProjectShadow } from '../utils/shadowSync';
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
@@ -166,6 +167,23 @@ export default function Careers() {
         setAiMessage('开始生成新职业...');
 
         try {
+            if (!projectId) {
+                setAiGenerating(false);
+                message.error('Please select a project first');
+                return;
+            }
+
+            try {
+                await syncProjectShadow(projectId);
+            } catch (error) {
+                console.error('shadow sync failed:', error);
+                setAiGenerating(false);
+                setAiProgress(0);
+                setAiMessage('');
+                message.error('Sync failed, please retry');
+                return;
+            }
+
             const eventSource = new EventSource(
                 `/api/careers/generate-system?` +
                 new URLSearchParams({

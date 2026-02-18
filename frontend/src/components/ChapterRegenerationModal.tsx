@@ -22,6 +22,8 @@ import {
 } from '@ant-design/icons';
 import { ssePost } from '../utils/sseClient';
 import { SSEProgressModal } from './SSEProgressModal';
+import { useStore } from '../store';
+import { syncProjectShadow } from '../utils/shadowSync';
 
 const { TextArea } = Input;
 const { Panel } = Collapse;
@@ -54,6 +56,7 @@ const ChapterRegenerationModal: React.FC<ChapterRegenerationModalProps> = ({
   suggestions = [],
   hasAnalysis
 }) => {
+  const { currentProject } = useStore();
   const [form] = Form.useForm();
   const [modal, contextHolder] = Modal.useModal();
   const [loading, setLoading] = useState(false);
@@ -110,6 +113,19 @@ const ChapterRegenerationModal: React.FC<ChapterRegenerationModalProps> = ({
           selectedSuggestions.length === 0 && 
           !values.custom_instructions?.trim()) {
         message.error('请至少选择一条建议或输入自定义要求');
+        return;
+      }
+
+      if (!currentProject?.id) {
+        message.error('Please select a project first');
+        return;
+      }
+
+      try {
+        await syncProjectShadow(currentProject.id);
+      } catch (error) {
+        console.error('shadow sync failed:', error);
+        message.error('Sync failed, please retry');
         return;
       }
 

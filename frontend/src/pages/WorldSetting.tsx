@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useStore } from '../store';
 import { cardStyles } from '../components/CardStyles';
 import { projectApi, wizardStreamApi } from '../services/api';
+import { syncProjectShadow } from '../utils/shadowSync';
 import { SSELoadingOverlay } from '../components/SSELoadingOverlay';
 
 const { Title, Paragraph } = Typography;
@@ -46,6 +47,17 @@ export default function WorldSetting() {
         setRegenerateMessage('准备重新生成世界观...');
 
         try {
+          try {
+            await syncProjectShadow(currentProject.id);
+          } catch (error) {
+            console.error('shadow sync failed:', error);
+            message.error('Sync failed, please retry');
+            setIsRegenerating(false);
+            setRegenerateProgress(0);
+            setRegenerateMessage('');
+            return;
+          }
+
           await wizardStreamApi.regenerateWorldBuildingStream(
             currentProject.id,
             {},

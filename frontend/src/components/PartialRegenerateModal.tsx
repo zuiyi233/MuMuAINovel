@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Input, Button, Space, Radio, InputNumber, Card, message, Alert, Spin, Typography, Divider } from 'antd';
 import { ThunderboltOutlined, CheckOutlined, ReloadOutlined, EditOutlined, LoadingOutlined } from '@ant-design/icons';
 import { chapterApi } from '../services/api';
+import { useStore } from '../store';
+import { syncProjectShadow } from '../utils/shadowSync';
 
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
@@ -33,6 +35,7 @@ export const PartialRegenerateModal: React.FC<PartialRegenerateModalProps> = ({
   onClose,
   onApply,
 }) => {
+  const { currentProject } = useStore();
   const [userInstructions, setUserInstructions] = useState('');
   const [lengthMode, setLengthMode] = useState<LengthMode>('similar');
   const [customWordCount, setCustomWordCount] = useState<number>(selectedText.length);
@@ -68,6 +71,19 @@ export const PartialRegenerateModal: React.FC<PartialRegenerateModalProps> = ({
   const handleGenerate = async () => {
     if (!userInstructions.trim()) {
       message.warning('请输入重写要求');
+      return;
+    }
+
+    if (!currentProject?.id) {
+      message.error('Please select a project first');
+      return;
+    }
+
+    try {
+      await syncProjectShadow(currentProject.id);
+    } catch (error) {
+      console.error('shadow sync failed:', error);
+      message.error('Sync failed, please retry');
       return;
     }
 

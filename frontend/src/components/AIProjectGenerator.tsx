@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Space, Typography, message, Progress } from 'antd';
 import { CheckCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { wizardStreamApi } from '../services/api';
+import { syncProjectShadow } from '../utils/shadowSync';
 import type { ApiError } from '../types';
 
 const { Title, Paragraph, Text } = Typography;
@@ -79,6 +80,14 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     projectId: `${storagePrefix}_project_id`,
     generationData: `${storagePrefix}_generation_data`,
     currentStep: `${storagePrefix}_current_step`
+  };
+
+  const syncShadowOrThrow = async (pid: string) => {
+    if (!pid) return;
+    const result = await syncProjectShadow(pid);
+    if (!result?.ok) {
+      throw new Error('Shadow sync failed');
+    }
   };
 
   // 保存进度到localStorage
@@ -237,6 +246,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, careers: 'processing' }));
     setProgressMessage('正在生成职业体系...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCareerSystemStream(
       {
         project_id: pid,
@@ -274,6 +284,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, characters: 'processing' }));
     setProgressMessage('正在生成角色...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCharactersStream(
       {
         project_id: pid,
@@ -318,6 +329,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, outline: 'processing' }));
     setProgressMessage('正在生成大纲...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCompleteOutlineStream(
       {
         project_id: pid,
@@ -426,6 +438,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
       setGenerationSteps(prev => ({ ...prev, careers: 'processing' }));
       setProgressMessage('正在生成职业体系...');
 
+      await syncShadowOrThrow(createdProjectId);
       await wizardStreamApi.generateCareerSystemStream(
         {
           project_id: createdProjectId,
@@ -456,6 +469,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
       setGenerationSteps(prev => ({ ...prev, characters: 'processing' }));
       setProgressMessage('正在生成角色...');
 
+      await syncShadowOrThrow(createdProjectId);
       await wizardStreamApi.generateCharactersStream(
         {
           project_id: createdProjectId,
@@ -496,6 +510,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
       setGenerationSteps(prev => ({ ...prev, outline: 'processing' }));
       setProgressMessage('正在生成大纲...');
 
+      await syncShadowOrThrow(createdProjectId);
       await wizardStreamApi.generateCompleteOutlineStream(
         {
           project_id: createdProjectId,
@@ -652,6 +667,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, careers: 'processing' }));
     setProgressMessage('重新生成职业体系...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCareerSystemStream(
       {
         project_id: pid,
@@ -702,6 +718,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
 
     const genreString = Array.isArray(generationData.genre) ? generationData.genre.join('、') : generationData.genre;
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCharactersStream(
       {
         project_id: pid,
@@ -760,6 +777,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, outline: 'processing' }));
     setProgressMessage('重新生成大纲...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCompleteOutlineStream(
       {
         project_id: pid,
@@ -815,6 +833,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, careers: 'processing' }));
     setProgressMessage('正在生成职业体系...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCareerSystemStream(
       {
         project_id: pid,
@@ -854,6 +873,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, characters: 'processing' }));
     setProgressMessage('正在生成角色...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCharactersStream(
       {
         project_id: pid,
@@ -900,6 +920,7 @@ export const AIProjectGenerator: React.FC<AIProjectGeneratorProps> = ({
     setGenerationSteps(prev => ({ ...prev, outline: 'processing' }));
     setProgressMessage('正在生成大纲...');
 
+    await syncShadowOrThrow(pid);
     await wizardStreamApi.generateCompleteOutlineStream(
       {
         project_id: pid,

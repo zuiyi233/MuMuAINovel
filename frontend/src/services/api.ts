@@ -283,6 +283,16 @@ export const skillsApi = {
   activate: (skillKey: string | null) => api.post('/skills/activate', { skill_key: skillKey }),
 };
 
+export const syncApi = {
+  syncShadow: (data: Record<string, unknown>) =>
+    api.post<unknown, {
+      ok: boolean;
+      project_id: string;
+      upserted: Record<string, number>;
+      deleted: Record<string, number>;
+    }>('/sync/shadow', data),
+};
+
 export const projectApi = {
   getProjects: () => api.get<unknown, Project[]>('/projects'),
 

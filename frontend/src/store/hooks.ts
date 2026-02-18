@@ -7,6 +7,8 @@ import { useCallback } from 'react';
 import { message } from 'antd';
 import { useStore } from './index';
 import { projectApi, outlineApi, characterApi, chapterApi } from '../services/api';
+import { syncProjectShadow } from '../utils/shadowSync';
+import { localChapters, localCharacters, localOutlines, localProjects } from '../utils/localDb';
 import type {
   PaginationResponse,
   Outline,
@@ -36,6 +38,7 @@ export function useProjectSync() {
       const data = await projectApi.getProjects();
       const projects = Array.isArray(data) ? data : (data as PaginationResponse<Project>).items || [];
       setProjects(projects);
+      await localProjects.replaceAll(projects);
       return projects;
     } catch (error) {
       console.error('刷新项目列表失败:', error);
@@ -51,6 +54,7 @@ export function useProjectSync() {
     try {
       const created = await projectApi.createProject(data);
       addProject(created);
+      await localProjects.upsert(created);
       return created;
     } catch (error) {
       console.error('创建项目失败:', error);
@@ -63,6 +67,7 @@ export function useProjectSync() {
     try {
       const updated = await projectApi.updateProject(id, data);
       updateProject(id, updated);
+      await localProjects.upsert(updated);
       return updated;
     } catch (error) {
       console.error('更新项目失败:', error);
@@ -75,6 +80,7 @@ export function useProjectSync() {
     try {
       await projectApi.deleteProject(id);
       removeProject(id);
+      await localProjects.delete(id);
     } catch (error) {
       console.error('删除项目失败:', error);
       throw error;
@@ -104,6 +110,7 @@ export function useCharacterSync() {
       const data = await characterApi.getCharacters(id);
       const characters = Array.isArray(data) ? data : (data as PaginationResponse<Character>).items || [];
       setCharacters(characters);
+      await localCharacters.replaceProject(id, characters);
       return characters;
     } catch (error) {
       console.error('刷新角色列表失败:', error);
@@ -117,6 +124,7 @@ export function useCharacterSync() {
     try {
       await characterApi.deleteCharacter(id);
       removeCharacter(id);
+      await localCharacters.delete(id);
     } catch (error) {
       console.error('删除角色失败:', error);
       throw error;
@@ -126,8 +134,10 @@ export function useCharacterSync() {
   // AI生成角色（带同步）
   const generateCharacter = useCallback(async (data: GenerateCharacterRequest) => {
     try {
+      await syncProjectShadow(data.project_id);
       const generated = await characterApi.generateCharacter(data);
       addCharacter(generated);
+      await localCharacters.upsert(generated);
       return generated;
     } catch (error) {
       console.error('AI生成角色失败:', error);
@@ -157,6 +167,7 @@ export function useOutlineSync() {
       const data = await outlineApi.getOutlines(id);
       const outlines = Array.isArray(data) ? data : (data as PaginationResponse<Outline>).items || [];
       setOutlines(outlines);
+      await localOutlines.replaceProject(id, outlines);
       return outlines;
     } catch (error) {
       console.error('刷新大纲列表失败:', error);
@@ -170,6 +181,7 @@ export function useOutlineSync() {
     try {
       const created = await outlineApi.createOutline(data);
       addOutline(created);
+      await localOutlines.upsert(created);
       return created;
     } catch (error) {
       console.error('创建大纲失败:', error);
@@ -182,6 +194,7 @@ export function useOutlineSync() {
     try {
       const updated = await outlineApi.updateOutline(id, data);
       updateOutline(id, updated);
+      await localOutlines.upsert(updated);
       return updated;
     } catch (error) {
       console.error('更新大纲失败:', error);
@@ -194,6 +207,7 @@ export function useOutlineSync() {
     try {
       await outlineApi.deleteOutline(id);
       removeOutline(id);
+      await localOutlines.delete(id);
     } catch (error) {
       console.error('删除大纲失败:', error);
       throw error;
@@ -203,9 +217,13 @@ export function useOutlineSync() {
   // AI生成大纲（带同步）
   const generateOutlines = useCallback(async (data: GenerateOutlineRequest) => {
     try {
+      await syncProjectShadow(data.project_id);
       const result = await outlineApi.generateOutline(data);
       const outlines = Array.isArray(result) ? result : (result as PaginationResponse<Outline>).items || [];
-      outlines.forEach((outline: Outline) => addOutline(outline));
+      for (const outline of outlines) {
+        addOutline(outline);
+        await localOutlines.upsert(outline);
+      }
       return outlines;
     } catch (error) {
       console.error('AI生成大纲失败:', error);
@@ -237,6 +255,7 @@ export function useChapterSync() {
       const data = await chapterApi.getChapters(id);
       const chapters = Array.isArray(data) ? data : (data as PaginationResponse<Chapter>).items || [];
       setChapters(chapters);
+      await localChapters.replaceProject(id, chapters);
       return chapters;
     } catch (error) {
       console.error('刷新章节列表失败:', error);
@@ -250,6 +269,7 @@ export function useChapterSync() {
     try {
       const created = await chapterApi.createChapter(data);
       addChapter(created);
+      await localChapters.upsert(created);
       return created;
     } catch (error) {
       console.error('创建章节失败:', error);
@@ -262,6 +282,7 @@ export function useChapterSync() {
     try {
       const updated = await chapterApi.updateChapter(id, data);
       updateChapter(id, updated);
+      await localChapters.upsert(updated);
       return updated;
     } catch (error) {
       console.error('更新章节失败:', error);
@@ -274,6 +295,7 @@ export function useChapterSync() {
     try {
       await chapterApi.deleteChapter(id);
       removeChapter(id);
+      await localChapters.delete(id);
     } catch (error) {
       console.error('删除章节失败:', error);
       throw error;
@@ -292,6 +314,12 @@ export function useChapterSync() {
   ) => {
     try {
       // 使用fetch处理流式响应
+      if (!currentProject?.id) {
+        throw new Error('Please select a project first');
+      }
+
+      await syncProjectShadow(currentProject.id);
+
       const response = await fetch(`/api/chapters/${chapterId}/generate-stream`, {
         method: 'POST',
         headers: {
@@ -399,7 +427,7 @@ export function useChapterSync() {
       console.error('AI流式生成章节内容失败:', error);
       throw error;
     }
-  }, [refreshChapters]);
+  }, [currentProject?.id, refreshChapters]);
 
   return {
     refreshChapters,

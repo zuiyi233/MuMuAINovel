@@ -1,5 +1,7 @@
-import api from '../services/api';
+import { syncApi } from '../services/api';
+import { localShadowDump } from './localDb';
 
 export const syncProjectShadow = async (projectId: string) => {
-  return api.post('/sync/shadow', { project_id: projectId });
+  const payload = await localShadowDump.projectBundle(projectId);
+  return syncApi.syncShadow(payload as unknown as Record<string, unknown>);
 };

@@ -5,6 +5,7 @@ import { useStore } from '../store';
 import { useOutlineSync } from '../store/hooks';
 import { SSEPostClient } from '../utils/sseClient';
 import { SSEProgressModal } from '../components/SSEProgressModal';
+import { syncProjectShadow } from '../utils/shadowSync';
 import { outlineApi, chapterApi, projectApi, characterApi } from '../services/api';
 import type { OutlineExpansionResponse, BatchOutlineExpansionResponse, ChapterPlanItem, ApiError, Character } from '../types';
 
@@ -516,6 +517,16 @@ export default function Outline() {
       console.log('6. 最终请求数据:', JSON.stringify(requestData, null, 2));
       console.log('=========================');
 
+      try {
+        await syncProjectShadow(currentProject.id);
+      } catch (error) {
+        console.error('shadow sync failed:', error);
+        message.error('Sync failed, please retry');
+        setSSEModalVisible(false);
+        setIsGenerating(false);
+        return;
+      }
+
       // 使用SSE客户端
       const apiUrl = `/api/outlines/generate-stream`;
       const client = new SSEPostClient(apiUrl, requestData, {
@@ -999,6 +1010,16 @@ export default function Outline() {
               auto_create_chapters: false, // 第一步：仅生成规划
               enable_scene_analysis: true
             };
+
+            try {
+              await syncProjectShadow(currentProject.id);
+            } catch (error) {
+              console.error('shadow sync failed:', error);
+              message.error('Sync failed, please retry');
+              setSSEModalVisible(false);
+              setIsExpanding(false);
+              return;
+            }
 
             // 使用SSE客户端调用新的流式端点
             const apiUrl = `/api/outlines/${outlineId}/expand-stream`;
@@ -1545,6 +1566,16 @@ export default function Outline() {
             ...values,
             auto_create_chapters: false // 第一步：仅生成规划
           };
+
+          try {
+            await syncProjectShadow(currentProject.id);
+          } catch (error) {
+            console.error('shadow sync failed:', error);
+            message.error('Sync failed, please retry');
+            setSSEModalVisible(false);
+            setIsExpanding(false);
+            return;
+          }
 
           // 使用SSE客户端
           const apiUrl = `/api/outlines/batch-expand-stream`;
