@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Input, Button, message, Space } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { polishApi } from '../services/api';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { TextArea } = Input;
 
@@ -34,43 +35,51 @@ export default function Polish() {
   };
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 16 }}>AI去味工具</h2>
-      <p style={{ color: 'rgba(0,0,0,0.45)', marginBottom: 24 }}>
-        将AI生成的文本变得更自然、更像人类作家的手笔
-      </p>
+    <div
+      style={{
+        minHeight: '100%',
+        background: 'var(--color-bg-base)',
+        padding: 'var(--space-lg)',
+      }}
+    >
+      <PageHeader
+        title="AI去味工具"
+        subtitle="将 AI 生成文本优化为更自然、更具人类作者风格的表达。"
+      />
 
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
-        <Card title="原始文本" extra={
-          <Button
-            type="primary"
-            icon={<ThunderboltOutlined />}
-            onClick={handlePolish}
-            loading={loading}
-          >
-            开始去味
-          </Button>
-        }>
-          <TextArea
-            rows={10}
-            placeholder="粘贴或输入需要去味的文本..."
-            value={originalText}
-            onChange={(e) => setOriginalText(e.target.value)}
-          />
-        </Card>
-
-        {polishedText && (
-          <Card title="去味后文本" extra={
-            <Button onClick={handleCopy}>复制文本</Button>
+      <SectionBlock>
+        <Space direction="vertical" style={{ width: '100%' }} size="large">
+          <Card title="原始文本" extra={
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              onClick={handlePolish}
+              loading={loading}
+            >
+              开始去味
+            </Button>
           }>
             <TextArea
               rows={10}
-              value={polishedText}
-              readOnly
+              placeholder="粘贴或输入需要去味的文本..."
+              value={originalText}
+              onChange={(e) => setOriginalText(e.target.value)}
             />
           </Card>
-        )}
-      </Space>
+
+          {polishedText && (
+            <Card title="去味后文本" extra={
+              <Button onClick={handleCopy}>复制文本</Button>
+            }>
+              <TextArea
+                rows={10}
+                value={polishedText}
+                readOnly
+              />
+            </Card>
+          )}
+        </Space>
+      </SectionBlock>
     </div>
   );
 }

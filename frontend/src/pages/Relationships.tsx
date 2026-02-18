@@ -4,6 +4,7 @@ import { Card, Table, Tag, Button, Space, message, Modal, Form, Select, Slider, 
 import { PlusOutlined, ApartmentOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
 import { useStore } from '../store';
 import axios from 'axios';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { TextArea } = Input;
 
@@ -308,100 +309,111 @@ export default function Relationships() {
   return (
     <>
       {contextHolder}
-      <div>
-        <Card
-        title={
-          <Space wrap>
-            <ApartmentOutlined />
-            <span style={{ fontSize: isMobile ? 14 : 16 }}>关系管理</span>
-            {!isMobile && <Tag color="blue">{currentProject?.title}</Tag>}
-          </Space>
-        }
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsModalOpen(true)}
-            size={isMobile ? 'small' : 'middle'}
-          >
-            {isMobile ? '添加' : '添加关系'}
-          </Button>
-        }
-      >
-        <Tabs
-          items={[
-            {
-              key: 'list',
-              label: `关系列表 (${relationships.length})`,
-              children: (
-                <Table
-                  columns={columns}
-                  dataSource={relationships}
-                  rowKey="id"
-                  loading={loading}
-                  pagination={{
-                    current: currentPage,
-                    pageSize: isMobile ? 10 : pageSize,
-                    pageSizeOptions: ['10', '20', '50', '100'],
-                    position: ['bottomCenter'],
-                    showSizeChanger: !isMobile,
-                    showQuickJumper: !isMobile,
-                    showTotal: (total) => `共 ${total} 条`,
-                    simple: isMobile,
-                    onChange: (page, size) => {
-                      setCurrentPage(page);
-                      if (size !== pageSize) {
-                        setPageSize(size);
-                        setCurrentPage(1); // 切换每页条数时重置到第一页
-                      }
-                    },
-                    onShowSizeChange: (_, size) => {
-                      setPageSize(size);
-                      setCurrentPage(1);
-                    }
-                  }}
-                  scroll={{
-                    x: 700,
-                    y: isMobile ? 'calc(100vh - 360px)' : 'calc(100vh - 440px)'
-                  }}
-                  size={isMobile ? 'small' : 'middle'}
-                />
-              ),
-            },
-            {
-              key: 'types',
-              label: `关系类型 (${relationshipTypes.length})`,
-              children: (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: isMobile ? '12px' : '16px',
-                  maxHeight: isMobile ? 'calc(100vh - 400px)' : 'calc(100vh - 350px)',
-                  overflow: 'auto'
-                }}>
-                  {Object.entries(groupedTypes).map(([category, types]) => (
-                    <Card
-                      key={category}
-                      size="small"
-                      title={categoryLabels[category] || category}
-                      headStyle={{ backgroundColor: '#f5f5f5' }}
-                    >
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        {types.map(type => (
-                          <Tag key={type.id} color={getCategoryColor(category)}>
-                            {type.icon} {type.name}
-                            {type.reverse_name && ` ↔ ${type.reverse_name}`}
-                          </Tag>
-                        ))}
-                      </Space>
-                    </Card>
-                  ))}
-                </div>
-              ),
-            },
-          ]}
+      <div style={{
+        flex: 1,
+        minHeight: 0,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
+        <PageHeader
+          title={(
+            <>
+              <ApartmentOutlined style={{ marginRight: 8 }} />
+              关系管理
+            </>
+          )}
+          subtitle={!isMobile && currentProject?.title ? <Tag color="blue">{currentProject.title}</Tag> : undefined}
+          actions={(
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setIsModalOpen(true)}
+              size={isMobile ? 'small' : 'middle'}
+            >
+              {isMobile ? '添加' : '添加关系'}
+            </Button>
+          )}
         />
-      </Card>
+
+        <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          <SectionBlock>
+            <Tabs
+              items={[
+                {
+                  key: 'list',
+                  label: `关系列表 (${relationships.length})`,
+                  children: (
+                    <Table
+                      columns={columns}
+                      dataSource={relationships}
+                      rowKey="id"
+                      loading={loading}
+                      pagination={{
+                        current: currentPage,
+                        pageSize: isMobile ? 10 : pageSize,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        position: ['bottomCenter'],
+                        showSizeChanger: !isMobile,
+                        showQuickJumper: !isMobile,
+                        showTotal: (total) => `共 ${total} 条`,
+                        simple: isMobile,
+                        onChange: (page, size) => {
+                          setCurrentPage(page);
+                          if (size !== pageSize) {
+                            setPageSize(size);
+                            setCurrentPage(1);
+                          }
+                        },
+                        onShowSizeChange: (_, size) => {
+                          setPageSize(size);
+                          setCurrentPage(1);
+                        }
+                      }}
+                      scroll={{
+                        x: 700,
+                        y: isMobile ? 'calc(100vh - 360px)' : 'calc(100vh - 440px)'
+                      }}
+                      size={isMobile ? 'small' : 'middle'}
+                    />
+                  ),
+                },
+                {
+                  key: 'types',
+                  label: `关系类型 (${relationshipTypes.length})`,
+                  children: (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(200px, 1fr))',
+                      gap: isMobile ? '12px' : '16px',
+                      maxHeight: isMobile ? 'calc(100vh - 400px)' : 'calc(100vh - 350px)',
+                      overflow: 'auto'
+                    }}>
+                      {Object.entries(groupedTypes).map(([category, types]) => (
+                        <Card
+                          key={category}
+                          size="small"
+                          title={categoryLabels[category] || category}
+                          headStyle={{ backgroundColor: '#f5f5f5' }}
+                        >
+                          <Space direction="vertical" style={{ width: '100%' }}>
+                            {types.map(type => (
+                              <Tag key={type.id} color={getCategoryColor(category)}>
+                                {type.icon} {type.name}
+                                {type.reverse_name && ` 鈫?${type.reverse_name}`}
+                              </Tag>
+                            ))}
+                          </Space>
+                        </Card>
+                      ))}
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </SectionBlock>
+        </div>
 
       <Modal
         title={isEditMode ? '编辑关系' : '添加关系'}
@@ -530,3 +542,4 @@ export default function Relationships() {
     </>
   );
 }
+

@@ -47,6 +47,7 @@ import type {
   User,
 } from '../types';
 import { PROMPT_CATEGORIES } from '../types';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
@@ -982,27 +983,22 @@ export default function PromptWorkshop() {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* 固定区域：标题 + Tabs切换栏 + 筛选栏 */}
-      <div style={{ flexShrink: 0 }}>
-        {/* 标题和操作区 */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: isMobile ? '12px 0' : '16px 0',
-          marginBottom: isMobile ? 12 : 16,
-          borderBottom: '1px solid #f0f0f0',
-          flexWrap: 'wrap',
-          gap: 12,
-        }}>
-          <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div
+      style={{
+        minHeight: '100%',
+        background: 'var(--color-bg-base)',
+        padding: isMobile ? 'var(--space-md) var(--space-sm)' : 'var(--space-lg)',
+      }}
+    >
+      <PageHeader
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
             <CloudOutlined />
             提示词工坊
-            {serviceStatus?.mode === 'server' && (
-              <Badge status="success" text="服务端模式" style={{ marginLeft: 8, fontSize: 12 }} />
-            )}
-          </h2>
+          </span>
+        }
+        subtitle={serviceStatus?.mode === 'server' ? '服务端模式已启用，可进行管理审核。' : '浏览、导入与分享社区提示词。'}
+        actions={
           <Button
             type="primary"
             icon={<CloudUploadOutlined />}
@@ -1010,9 +1006,10 @@ export default function PromptWorkshop() {
           >
             分享我的提示词
           </Button>
-        </div>
+        }
+      />
 
-        {/* Tabs 切换栏（不含内容） */}
+      <SectionBlock>
         <Tabs
           activeKey={activeTab}
           onChange={key => {
@@ -1045,16 +1042,14 @@ export default function PromptWorkshop() {
           tabBarStyle={{ marginBottom: 16 }}
         />
 
-        {/* 筛选栏（仅在浏览工坊时显示） */}
         {activeTab === 'browse' && renderFilterBar()}
-      </div>
 
-      {/* 滚动区域：只有卡片列表滚动 */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-        {activeTab === 'browse' && renderWorkshopList()}
-        {activeTab === 'submissions' && renderMySubmissions()}
-        {activeTab === 'admin' && renderAdminPanel()}
-      </div>
+        <div style={{ overflowY: 'auto', minHeight: 0 }}>
+          {activeTab === 'browse' && renderWorkshopList()}
+          {activeTab === 'submissions' && renderMySubmissions()}
+          {activeTab === 'admin' && renderAdminPanel()}
+        </div>
+      </SectionBlock>
 
       {/* 提交弹窗 */}
       <Modal

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Modal, Spin, Button } from 'antd';
+import { Button, Modal, Spin } from 'antd';
 import { LoadingOutlined, StopOutlined } from '@ant-design/icons';
 
 interface SSEProgressModalProps {
@@ -13,21 +12,19 @@ interface SSEProgressModalProps {
   cancelButtonText?: string;
 }
 
-/**
- * 统一的SSE进度显示Modal组件
- * 用于在Modal中显示AI生成进度，样式与SSELoadingOverlay保持一致
- */
-export const SSEProgressModal: React.FC<SSEProgressModalProps> = ({
+export function SSEProgressModal({
   visible,
   progress,
   message,
-  title = 'AI生成中...',
+  title = 'AI 生成中...',
   showPercentage = true,
   showIcon = true,
   onCancel,
   cancelButtonText = '取消任务',
-}) => {
+}: SSEProgressModalProps) {
   if (!visible) return null;
+
+  const safeProgress = Math.max(0, Math.min(100, progress));
 
   return (
     <Modal
@@ -36,114 +33,99 @@ export const SSEProgressModal: React.FC<SSEProgressModalProps> = ({
       footer={null}
       closable={false}
       centered
-      width={500}
+      width={520}
       maskClosable={false}
       keyboard={false}
-      styles={{
-        body: {
-          padding: '40px 40px 32px',
-        }
-      }}
+      styles={{ body: { padding: 'var(--space-xl)' } }}
     >
       <div>
-        {/* 标题和图标 */}
-        {showIcon && (
-          <div style={{
-            textAlign: 'center',
-            marginBottom: 24
-          }}>
-            <Spin
-              indicator={<LoadingOutlined style={{ fontSize: 48, color: 'var(--color-primary)' }} spin />}
-            />
-            <div style={{
-              fontSize: 20,
-              fontWeight: 'bold',
-              marginTop: 16,
-              color: 'var(--color-text-primary)'
-            }}>
+        {showIcon ? (
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+            <Spin indicator={<LoadingOutlined style={{ fontSize: 40, color: 'var(--color-primary)' }} spin />} />
+            <div
+              style={{
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: 700,
+                marginTop: 'var(--space-sm)',
+                color: 'var(--color-text-primary)',
+              }}
+            >
               {title}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* 进度条 */}
-        <div style={{
-          marginBottom: showPercentage ? 16 : 24
-        }}>
-          <div style={{
-            height: 12,
-            background: 'var(--color-bg-layout)',
-            borderRadius: 6,
-            overflow: 'hidden',
-            marginBottom: showPercentage ? 12 : 0
-          }}>
-            <div style={{
-              height: '100%',
-              background: progress === 100
-                ? 'linear-gradient(90deg, var(--color-success) 0%, var(--color-success-active) 100%)'
-                : 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-active) 100%)',
-              width: `${progress}%`,
-              transition: 'all 0.3s ease',
-              borderRadius: 6,
-              boxShadow: progress > 0 ? 'var(--shadow-card)' : 'none'
-            }} />
+        <div style={{ marginBottom: showPercentage ? 'var(--space-md)' : 'var(--space-lg)' }}>
+          <div
+            style={{
+              height: 12,
+              background: 'var(--color-bg-layout)',
+              borderRadius: 'var(--radius-pill)',
+              overflow: 'hidden',
+              marginBottom: showPercentage ? 'var(--space-sm)' : 0,
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${safeProgress}%`,
+                background:
+                  safeProgress >= 100
+                    ? 'linear-gradient(90deg, var(--color-success), var(--color-success-active))'
+                    : 'linear-gradient(90deg, var(--color-primary), var(--color-primary-hover))',
+                borderRadius: 'var(--radius-pill)',
+                transition: 'width var(--motion-duration-base) var(--motion-easing-standard)',
+              }}
+            />
           </div>
 
-          {/* 进度百分比 */}
-          {showPercentage && (
-            <div style={{
-              textAlign: 'center',
-              fontSize: 32,
-              fontWeight: 'bold',
-              color: progress === 100 ? 'var(--color-success)' : 'var(--color-primary)',
-              marginBottom: 8
-            }}>
-              {progress}%
-            </div>
-          )}
-        </div>
-
-        {/* 状态消息 */}
-        <div style={{
-          textAlign: 'center',
-          fontSize: 16,
-          color: 'var(--color-text-secondary)',
-          minHeight: 24,
-          padding: '0 20px',
-          marginBottom: 16
-        }}>
-          {message || '准备生成...'}
-        </div>
-
-        {/* 提示文字 */}
-        <div style={{
-          textAlign: 'center',
-          fontSize: 13,
-          color: 'var(--color-text-tertiary)',
-          marginBottom: onCancel ? 16 : 0
-        }}>
-          请勿关闭页面，生成过程需要一定时间
-        </div>
-
-        {/* 取消按钮 */}
-        {onCancel && (
-          <div style={{
-            textAlign: 'center',
-            marginTop: 16
-          }}>
-            <Button
-              danger
-              size="large"
-              icon={<StopOutlined />}
-              onClick={onCancel}
+          {showPercentage ? (
+            <div
+              style={{
+                textAlign: 'center',
+                fontSize: 'var(--font-size-xl)',
+                fontWeight: 700,
+                color: safeProgress >= 100 ? 'var(--color-success)' : 'var(--color-primary)',
+              }}
             >
+              {safeProgress}%
+            </div>
+          ) : null}
+        </div>
+
+        <div
+          style={{
+            textAlign: 'center',
+            fontSize: 'var(--font-size-md)',
+            color: 'var(--color-text-secondary)',
+            minHeight: 24,
+            marginBottom: 'var(--space-sm)',
+          }}
+        >
+          {message || '准备生成中...'}
+        </div>
+
+        <div
+          style={{
+            textAlign: 'center',
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--color-text-tertiary)',
+            marginBottom: onCancel ? 'var(--space-sm)' : 0,
+          }}
+        >
+          请勿关闭页面，生成过程可能需要一定时间。
+        </div>
+
+        {onCancel ? (
+          <div style={{ textAlign: 'center', marginTop: 'var(--space-sm)' }}>
+            <Button danger icon={<StopOutlined />} onClick={onCancel}>
               {cancelButtonText}
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
     </Modal>
   );
-};
+}
 
 export default SSEProgressModal;

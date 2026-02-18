@@ -8,6 +8,7 @@ import {
     MessageOutlined,
     StarOutlined
 } from '@ant-design/icons';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -55,48 +56,35 @@ export default function Sponsor() {
 
     return (
         <div style={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
+            minHeight: '100%',
+            background: 'var(--color-bg-base)',
+            padding: 'var(--space-lg)'
         }}>
             <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                padding: 'clamp(16px, 3vh, 24px) clamp(12px, 2vw, 16px)'
+                maxWidth: '1200px',
+                margin: '0 auto',
+                width: '100%'
             }}>
-                <div style={{
-                    maxWidth: '1200px',
-                    margin: '0 auto',
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minHeight: 'fit-content'
-                }}>
-                    {/* 头部标题区域 */}
-                    <div style={{ textAlign: 'center', marginBottom: 'clamp(20px, 4vh, 32px)' }}>
-                        <Title level={1} style={{ marginBottom: '8px', fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 'bold' }}>
-                            赞助 MuMuAINovel
-                        </Title>
-                        <Text type="secondary" style={{ fontSize: 'clamp(11px, 2vw, 13px)', letterSpacing: '2px' }}>
-                            SUPPORT AI NOVEL CREATION
-                        </Text>
+                <PageHeader
+                    title="赞助 MuMuAINovel"
+                    subtitle="SUPPORT AI NOVEL CREATION"
+                />
 
-                        <div style={{
-                            marginTop: 'clamp(12px, 2vh, 16px)',
-                            padding: 'clamp(12px, 2vh, 16px)',
-                            background: 'var(--color-primary)',
-                            borderRadius: '12px',
-                            color: '#fff'
-                        }}>
-                            <Title level={4} style={{ color: '#fff', marginBottom: '8px' }}>
-                                📚 MuMuAINovel - 基于 AI 的智能小说创作助手
-                            </Title>
-                            <Paragraph style={{ color: '#fff', fontSize: '14px', margin: 0 }}>
-                                支持多AI模型、智能向导、角色管理、章节编辑等强大功能
-                            </Paragraph>
-                        </div>
+                <SectionBlock>
+                    <div style={{
+                        marginBottom: 'clamp(20px, 4vh, 32px)',
+                        padding: 'clamp(12px, 2vh, 16px)',
+                        background: 'var(--color-primary)',
+                        borderRadius: '12px',
+                        color: '#fff',
+                        textAlign: 'center'
+                    }}>
+                        <Title level={4} style={{ color: '#fff', marginBottom: '8px' }}>
+                            📚 MuMuAINovel - 基于 AI 的智能小说创作助手
+                        </Title>
+                        <Paragraph style={{ color: '#fff', fontSize: '14px', margin: 0 }}>
+                            支持多AI模型、智能向导、角色管理、章节编辑等强大功能
+                        </Paragraph>
                     </div>
 
                     {/* 赞助专属权益 */}
@@ -210,7 +198,7 @@ export default function Sponsor() {
                             <StarOutlined style={{ color: '#faad14', margin: '0 4px' }} />
                         </div>
                     </div>
-                </div>
+                </SectionBlock>
             </div>
 
             {/* 二维码弹窗 */}

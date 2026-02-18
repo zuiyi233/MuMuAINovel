@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Button, Card, Space, Typography, message, Spin, Form, Input, Tabs } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { authApi } from '../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AnnouncementModal from '../components/AnnouncementModal';
+import { PageHeader, SectionBlock } from '../components/ui';
 
-const { Title, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -298,25 +299,18 @@ export default function Login() {
                   }}
                 />
               </div>
-              <Title level={2} style={{
-                marginBottom: 8,
-                color: 'var(--color-primary)',
-                fontWeight: 700,
-              }}>
-                AI小说创作助手
-              </Title>
-              <Paragraph style={{
-                color: 'var(--color-text-secondary)',
-                fontSize: '14px',
-                marginBottom: 0,
-              }}>
-                {localAuthEnabled && linuxdoEnabled ? '选择登录方式' :
-                  localAuthEnabled ? '使用账户密码登录' :
-                    '使用 LinuxDO 账号登录'}
-              </Paragraph>
+              <PageHeader
+                compact
+                title="AI小说创作助手"
+                subtitle={
+                  localAuthEnabled && linuxdoEnabled ? '选择登录方式' :
+                  localAuthEnabled ? '使用账户密码登录' : '使用 LinuxDO 账户登录'
+                }
+              />
             </div>
 
             {/* 登录方式 */}
+            <SectionBlock>
             {localAuthEnabled && linuxdoEnabled ? (
               <Tabs
                 defaultActiveKey="local"
@@ -339,6 +333,8 @@ export default function Login() {
             ) : (
               renderLinuxDOLogin()
             )}
+
+            </SectionBlock>
 
             {/* 提示信息 */}
             <div style={{
@@ -364,3 +360,5 @@ export default function Login() {
     </>
   );
 }
+
+

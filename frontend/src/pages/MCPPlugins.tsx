@@ -14,8 +14,6 @@ import {
   Spin,
   Empty,
   Alert,
-  Row,
-  Col,
 } from 'antd';
 import {
   PlusOutlined,
@@ -32,16 +30,17 @@ import {
 } from '@ant-design/icons';
 import { mcpPluginApi, settingsApi } from '../services/api';
 import type { MCPPlugin, MCPTool } from '../types';
+import { PageHeader, SectionBlock } from '../components/ui';
 
-const { Paragraph, Text, Title } = Typography;
+const { Paragraph, Text } = Typography;
 const { TextArea } = Input;
 
 export default function MCPPluginsPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [form] = Form.useForm();
   
-  // 响应式监听窗口大小变化
-  useEffect(() => {
+  // 响应式监听窗口大小变更
+useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -63,7 +62,7 @@ export default function MCPPluginsPage() {
       setLoading(true);
       try {
         // 1. 并行获取插件列表和当前设置
-        const [pluginsData, settings] = await Promise.all([
+const [pluginsData, settings] = await Promise.all([
           mcpPluginApi.getPlugins(),
           settingsApi.getSettings()
         ]);
@@ -71,7 +70,7 @@ export default function MCPPluginsPage() {
         setPlugins(pluginsData);
 
         // 2. 检查配置一致性
-        const verifiedConfigStr = localStorage.getItem('mcp_verified_config');
+const verifiedConfigStr = localStorage.getItem('mcp_verified_config');
         if (verifiedConfigStr) {
           try {
             const verifiedConfig = JSON.parse(verifiedConfigStr);
@@ -89,18 +88,18 @@ export default function MCPPluginsPage() {
 
             if (isConfigChanged) {
               // 配置已变更
-              setModelSupportStatus('unknown');
+setModelSupportStatus('unknown');
               
               // 检查是否有正在运行的插件
-              const activePlugins = pluginsData.filter(p => p.enabled);
+const activePlugins = pluginsData.filter(p => p.enabled);
               if (activePlugins.length > 0) {
                 // 自动禁用所有插件
-                message.loading({ content: '检测到模型配置变更，正在为了安全自动禁用插件...', key: 'auto_disable' });
+message.loading({ content: '检测到模型配置变更，正在为了安全自动禁用插件..', key: 'auto_disable' });
                 
                 await Promise.all(activePlugins.map(p => mcpPluginApi.togglePlugin(p.id, false)));
                 
                 // 重新加载插件列表状态
-                const updatedPlugins = await mcpPluginApi.getPlugins();
+const updatedPlugins = await mcpPluginApi.getPlugins();
                 setPlugins(updatedPlugins);
                 
                 message.success({ content: '已自动禁用所有插件，请重新检测模型能力', key: 'auto_disable' });
@@ -108,7 +107,7 @@ export default function MCPPluginsPage() {
                 modal.warning({
                   title: '配置变更提醒',
                   centered: true,
-                  content: '检测到您更换了 AI 模型或接口地址。为了防止错误调用，系统已自动暂停所有 MCP 插件。请重新进行"模型能力检查"，确认新模型支持 Function Calling 后再启用插件。',
+                  content: '检测到您更换了 AI 模型或接口地址。系统已自动暂停所有 MCP 插件，请重新进行模型能力检测后再启用插件。',
                   okText: '知道了',
                 });
               } else {
@@ -117,7 +116,7 @@ export default function MCPPluginsPage() {
               }
               
               // 清除旧的验证状态
-              localStorage.removeItem('mcp_verified_config');
+localStorage.removeItem('mcp_verified_config');
             } else {
               // 配置未变更，恢复验证状态（根据缓存的状态恢复）
               const cachedStatus = verifiedConfig.status || 'supported';
@@ -151,10 +150,10 @@ export default function MCPPluginsPage() {
   const handleCreate = () => {
     if (modelSupportStatus !== 'supported') {
       modal.confirm({
-        title: '模型能力检查',
+        title: '模型能力检测',
         centered: true,
         icon: <WarningOutlined />,
-        content: '为了确保 MCP 插件正常工作，您当前使用的 AI 模型必须支持 Function Calling（工具调用）能力。请先进行模型支持检测。',
+        content: '为了确保 MCP 插件可用，当前模型需要支持 Function Calling。请先完成检测。',
         okText: '去检测',
         cancelText: '取消',
         onOk: handleCheckFunctionCalling,
@@ -246,7 +245,7 @@ export default function MCPPluginsPage() {
       const result = await mcpPluginApi.testPlugin(pluginId);
 
       // 测试完成后，无论成功失败都刷新插件列表以更新状态
-      await loadPlugins();
+await loadPlugins();
 
       if (result.success) {
         const suggestions = result.suggestions || [];
@@ -263,7 +262,7 @@ export default function MCPPluginsPage() {
             <div style={{ padding: '8px 0' }}>
               <div style={{ marginBottom: 16, padding: 12, background: 'var(--color-success-bg)', border: '1px solid var(--color-success-border)', borderRadius: 8 }}>
                 <Typography.Text strong style={{ color: 'var(--color-success)', fontSize: 14 }}>
-                  ✓ {result.message}
+                  {`检测通过：${result.message}`}
                 </Typography.Text>
               </div>
 
@@ -280,7 +279,7 @@ export default function MCPPluginsPage() {
 
               {aiChoice && (
                 <div style={{ marginBottom: 12, padding: 12, background: 'var(--color-info-bg)', borderRadius: 8, border: '1px solid var(--color-info-border)' }}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>🤖 AI选择的工具</Text>
+                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>AI 选择的工具</Text>
                   <Text code strong>{aiChoice}</Text>
                   {callTime && <Tag color="blue" style={{ marginLeft: 8 }}>{callTime}</Tag>}
                 </div>
@@ -304,7 +303,7 @@ export default function MCPPluginsPage() {
                 </div>
               )}
 
-              <Alert message='插件状态已自动更新为"运行中"' type="success" showIcon />
+              <Alert message='插件状态已自动更新：运行中' type="success" showIcon />
             </div>
           ),
         });
@@ -388,7 +387,7 @@ export default function MCPPluginsPage() {
       const settings = await settingsApi.getSettings();
       
       if (!settings.api_key || !settings.llm_model) {
-        message.warning('请先在设置页面配置 API Key 和模型');
+        message.warning('请先在设置页配置 API Key 和模型');
         return;
       }
 
@@ -400,7 +399,7 @@ export default function MCPPluginsPage() {
       });
 
       // 无论成功失败，都缓存当前测试的配置和状态
-      const configToCache = {
+const configToCache = {
         provider: settings.api_provider,
         baseUrl: settings.api_base_url,
         model: settings.llm_model,
@@ -413,14 +412,14 @@ export default function MCPPluginsPage() {
         setModelSupportStatus('supported');
 
         modal.success({
-          title: '✅ Function Calling 支持检测',
+          title: 'Function Calling 支持检测',
           centered: true,
           width: isMobile ? '95%' : 700,
           content: (
             <div style={{ padding: '8px 0' }}>
               <div style={{ marginBottom: 16, padding: 12, background: 'var(--color-success-bg)', border: '1px solid var(--color-success-border)', borderRadius: 8 }}>
                 <Typography.Text strong style={{ color: 'var(--color-success)', fontSize: 14 }}>
-                  ✓ {result.message}
+                  {`检测通过：${result.message}`}
                 </Typography.Text>
               </div>
 
@@ -445,11 +444,11 @@ export default function MCPPluginsPage() {
 
               {result.details && (
                 <div style={{ marginBottom: 12 }}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>📊 检测详情</Text>
+                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>检测详情</Text>
                   <div style={{ padding: 8, background: 'var(--color-bg-layout)', borderRadius: 4, fontSize: 12 }}>
-                    <div>✓ 工具调用数量: {result.details.tool_call_count || 0}</div>
-                    <div>✓ 测试工具: {result.details.test_tool || 'N/A'}</div>
-                    <div>✓ 响应类型: {result.details.response_type || 'N/A'}</div>
+                    <div>工具调用数量: {result.details.tool_call_count || 0}</div>
+                    <div>测试工具: {result.details.test_tool || 'N/A'}</div>
+                    <div>响应类型: {result.details.response_type || 'N/A'}</div>
                   </div>
                 </div>
               )}
@@ -479,7 +478,7 @@ export default function MCPPluginsPage() {
       } else {
         setModelSupportStatus('unsupported');
         modal.warning({
-          title: '❌ Function Calling 支持检测',
+          title: 'Function Calling 支持检测',
           centered: true,
           width: isMobile ? '95%' : 700,
           content: (
@@ -509,7 +508,7 @@ export default function MCPPluginsPage() {
 
               {result.response_preview && (
                 <div style={{ marginBottom: 12 }}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>📝 模型返回内容（前200字符）</Text>
+                  <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>模型返回内容（前 200 字符）</Text>
                   <pre style={{ margin: 0, padding: 8, background: 'var(--color-bg-layout)', borderRadius: 4, fontSize: 11, overflow: 'auto', maxHeight: 100, whiteSpace: 'pre-wrap' }}>
                     {result.response_preview}
                   </pre>
@@ -547,11 +546,11 @@ export default function MCPPluginsPage() {
   const handleSubmit = async (values: { config_json: string; enabled: boolean; category?: string }) => {
     setLoading(true);
     try {
-      // 验证JSON格式
+      // 验证 JSON 格式
       try {
         JSON.parse(values.config_json);
       } catch {
-        message.error('配置JSON格式错误，请检查');
+        message.error('配置 JSON 格式错误，请检查');
         setLoading(false);
         return;
       }
@@ -563,7 +562,7 @@ export default function MCPPluginsPage() {
       };
 
       // 统一使用简化API，后端会自动判断是创建还是更新
-      await mcpPluginApi.createPluginSimple(data);
+await mcpPluginApi.createPluginSimple(data);
       message.success(editingPlugin ? '插件已更新' : '插件已创建');
 
       setModalVisible(false);
@@ -598,74 +597,38 @@ export default function MCPPluginsPage() {
     <>
       {contextHolder}
       <div style={{
-        minHeight: '90vh',
-        background: 'linear-gradient(180deg, var(--color-bg-base) 0%, #EEF2F3 100%)',
-        padding: isMobile ? '20px 16px 70px' : '24px 24px 70px',
+        minHeight: '100%',
+        background: 'var(--color-bg-base)',
+        padding: isMobile ? 'var(--space-sm)' : 'var(--space-lg)',
         display: 'flex',
         flexDirection: 'column',
       }}>
         <div style={{
-          maxWidth: 1400,
+          maxWidth: 1280,
           margin: '0 auto',
           width: '100%',
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
+          gap: 'var(--space-md)',
         }}>
           {/* 顶部导航卡片 */}
-          <Card
-            variant="borderless"
-            style={{
-              background: 'linear-gradient(135deg, var(--color-primary) 0%, #5A9BA5 50%, var(--color-primary-hover) 100%)',
-              borderRadius: isMobile ? 16 : 24,
-              boxShadow: '0 12px 40px rgba(77, 128, 136, 0.25), 0 4px 12px rgba(0, 0, 0, 0.06)',
-              marginBottom: isMobile ? 20 : 24,
-              border: 'none',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            {/* 装饰性背景元素 */}
-            <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.08)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: -40, left: '30%', width: 120, height: 120, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.05)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', top: '50%', right: '15%', width: 80, height: 80, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.06)', pointerEvents: 'none' }} />
+          <PageHeader
+            title={
+              <Space align="center" size={8}>
+                <ToolOutlined />
+                <span>MCP插件管理</span>
+              </Space>
+            }
+            subtitle="扩展 AI 能力，连接外部工具与服务"
+            actions={(
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                添加插件
+              </Button>
+            )}
+          />
 
-            <Row align="middle" justify="space-between" gutter={[16, 16]} style={{ position: 'relative', zIndex: 1 }}>
-              <Col xs={24} sm={12}>
-                <Space direction="vertical" size={4}>
-                  <Space align="center">
-                    <Title level={isMobile ? 3 : 2} style={{ margin: 0, color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                      <ToolOutlined style={{ color: 'rgba(255,255,255,0.9)', marginRight: 8 }} />
-                      MCP插件管理
-                    </Title>
-                  </Space>
-                  <Text style={{ fontSize: isMobile ? 12 : 14, color: 'rgba(255,255,255,0.85)', marginLeft: isMobile ? 40 : 48 }}>
-                    扩展AI能力，连接外部工具与服务
-                  </Text>
-                </Space>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Space size={12} style={{ display: 'flex', justifyContent: isMobile ? 'flex-start' : 'flex-end', width: '100%' }}>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleCreate}
-                    style={{
-                      borderRadius: 12,
-                      background: 'rgba(255, 193, 7, 0.95)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      boxShadow: '0 4px 16px rgba(255, 193, 7, 0.4)',
-                      color: '#fff',
-                      fontWeight: 600
-                    }}
-                  >
-                    添加插件
-                  </Button>
-                </Space>
-              </Col>
-            </Row>
-
-            <div style={{ marginTop: isMobile ? 16 : 24, display: 'flex', gap: isMobile ? 12 : 16, flexDirection: isMobile ? 'column' : 'row' }}>
+          <SectionBlock>
+            <div style={{ display: 'flex', gap: isMobile ? 12 : 16, flexDirection: isMobile ? 'column' : 'row' }}>
               <Card
                 variant="borderless"
                 style={{
@@ -704,13 +667,13 @@ export default function MCPPluginsPage() {
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <Text strong style={{ fontSize: isMobile ? 14 : 16, display: 'block', color: 'var(--color-text-primary)' }}>模型能力检查</Text>
+                      <Text strong style={{ fontSize: isMobile ? 14 : 16, display: 'block', color: 'var(--color-text-primary)' }}>模型能力检测</Text>
                       <Text type="secondary" style={{ fontSize: isMobile ? 12 : 13, display: 'block', lineHeight: 1.5 }}>
                         {modelSupportStatus === 'supported'
                           ? '当前模型支持 Function Calling，可正常使用 MCP 插件'
                           : modelSupportStatus === 'unsupported'
-                            ? '当前模型不支持 Function Calling，无法使用 MCP 插件'
-                            : '请先检测模型是否支持 Function Calling 能力'}
+                            ? '当前模型不支持Function Calling，无法使用MCP 插件'
+                            : '请先检测模型是否支持Function Calling 能力'}
                       </Text>
                     </div>
                   </Space>
@@ -744,22 +707,21 @@ export default function MCPPluginsPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Text strong style={{ fontSize: isMobile ? 14 : 16, display: 'block', color: 'var(--color-text-primary)', marginBottom: 4 }}>什么是 MCP 插件？</Text>
                     <Text style={{ fontSize: isMobile ? 12 : 13, display: 'block', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-                      MCP (Model Context Protocol) 协议允许 AI 调用外部工具获取数据。通过添加插件，AI 可以访问搜索引擎、数据库、API 等服务，大幅增强创作能力。
-                    </Text>
+                      MCP (Model Context Protocol) 协议允许 AI 调用外部工具获取数据。通过添加插件，AI 可以访问搜索引擎、数据库、API 等服务，大幅增强创作能力。                    </Text>
                   </div>
                 </Space>
               </Card>
             </div>
-          </Card>
+          </SectionBlock>
 
           {/* 主内容区 */}
-          <div style={{ flex: 1 }}>
-            {/* 模型能力未验证时的警告提示 */}
+          <SectionBlock>
+            {/* 模型能力未验证时的警告提示*/}
             {modelSupportStatus !== 'supported' && plugins.length > 0 && (
               <Alert
                 message={
                   modelSupportStatus === 'unsupported'
-                    ? '当前模型不支持 Function Calling，所有插件操作已禁用'
+                    ? '当前模型不支持Function Calling，所有插件操作已禁用'
                     : '请先完成模型能力检查，才能操作插件'
                 }
                 type={modelSupportStatus === 'unsupported' ? 'error' : 'warning'}
@@ -825,7 +787,7 @@ export default function MCPPluginsPage() {
                               {/* 移动端：开关放在标题行右侧 */}
                               {isMobile && (
                                 <Switch
-                                  title={modelSupportStatus !== 'supported' ? '请先完成模型能力检查' : (plugin.enabled ? '禁用插件' : '启用插件')}
+                                  title={modelSupportStatus !== 'supported' ? '请先完成模型能力检测' : (plugin.enabled ? '禁用插件' : '启用插件')}
                                   checked={plugin.enabled}
                                   onChange={(checked) => handleToggle(plugin, checked)}
                                   disabled={modelSupportStatus !== 'supported'}
@@ -895,8 +857,8 @@ export default function MCPPluginsPage() {
 
                                       return maskedUrl;
                                     } catch {
-                                      // 如果URL解析失败，尝试简单替换
-                                      return url.replace(/([?&])(apiKey|api_key|key|token|secret|password|auth)=([^&]+)/gi, '$1$2=***');
+                                      // 如果 URL 解析失败，尝试简单替换
+return url.replace(/([?&])(apiKey|api_key|key|token|secret|password|auth)=([^&]+)/gi, '$1$2=***');
                                     }
                                   })()}
                                 </Text>
@@ -938,7 +900,7 @@ export default function MCPPluginsPage() {
                           {/* 桌面端显示开关 */}
                           {!isMobile && (
                             <Switch
-                              title={modelSupportStatus !== 'supported' ? '请先完成模型能力检查' : (plugin.enabled ? '禁用插件' : '启用插件')}
+                              title={modelSupportStatus !== 'supported' ? '请先完成模型能力检测' : (plugin.enabled ? '禁用插件' : '启用插件')}
                               checked={plugin.enabled}
                               onChange={(checked) => handleToggle(plugin, checked)}
                               disabled={modelSupportStatus !== 'supported'}
@@ -947,7 +909,7 @@ export default function MCPPluginsPage() {
                             />
                           )}
                           <Button
-                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检查' : '测试连接'}
+                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检测' : '测试连接'}
                             icon={<ThunderboltOutlined />}
                             onClick={() => handleTest(plugin.id)}
                             loading={testingPluginId === plugin.id}
@@ -957,7 +919,7 @@ export default function MCPPluginsPage() {
                             {!isMobile && '测试'}
                           </Button>
                           <Button
-                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检查' : '查看工具'}
+                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检测' : '查看工具'}
                             icon={<ToolOutlined />}
                             onClick={() => handleViewTools(plugin.id)}
                             disabled={modelSupportStatus !== 'supported' || !plugin.enabled || plugin.status !== 'active'}
@@ -966,7 +928,7 @@ export default function MCPPluginsPage() {
                             {!isMobile && '工具'}
                           </Button>
                           <Button
-                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检查' : '编辑'}
+                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检测' : '编辑'}
                             icon={<EditOutlined />}
                             onClick={() => handleEdit(plugin)}
                             disabled={modelSupportStatus !== 'supported'}
@@ -975,7 +937,7 @@ export default function MCPPluginsPage() {
                             {!isMobile && '编辑'}
                           </Button>
                           <Button
-                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检查' : '删除'}
+                            title={modelSupportStatus !== 'supported' ? '请先完成模型能力检测' : '删除'}
                             danger
                             icon={<DeleteOutlined />}
                             onClick={() => handleDelete(plugin)}
@@ -991,7 +953,7 @@ export default function MCPPluginsPage() {
                 </Space>
               )}
             </Spin>
-          </div>
+          </SectionBlock>
         </div>
 
         {/* 创建/编辑插件模态框 */}
@@ -1014,12 +976,11 @@ export default function MCPPluginsPage() {
               label="MCP配置JSON"
               name="config_json"
               rules={[{ required: true, message: '请输入配置JSON' }]}
-              extra="粘贴标准MCP配置，系统自动提取插件名称。支持HTTP和Stdio类型"
+              extra="粘贴标准 MCP 配置，系统自动提取插件名称。支持 HTTP 和 Stdio 类型"
             >
               <TextArea
                 rows={isMobile ? 12 : 16}
-                placeholder={`示例：
-{
+                placeholder={`示例：{
   "mcpServers": {
     "exa": {
       "type": "streamable_http",
@@ -1036,14 +997,14 @@ export default function MCPPluginsPage() {
               label="插件分类"
               name="category"
               rules={[{ required: true, message: '请选择插件分类' }]}
-              extra="选择插件的功能类别，用于AI智能匹配使用场景"
+              extra="选择插件的功能类别，用于 AI 智能匹配使用场景"
             >
               <Select placeholder="请选择分类">
                 <Select.Option value="search">搜索类 (Search) - 网络搜索、信息查询</Select.Option>
                 <Select.Option value="analysis">分析类 (Analysis) - 数据分析、文本处理</Select.Option>
                 <Select.Option value="filesystem">文件系统 (FileSystem) - 文件读写操作</Select.Option>
                 <Select.Option value="database">数据库 (Database) - 数据库查询</Select.Option>
-                <Select.Option value="api">API调用 (API) - 第三方服务接口</Select.Option>
+                <Select.Option value="api">API 调用 (API) - 第三方服务接口</Select.Option>
                 <Select.Option value="generation">生成类 (Generation) - 内容生成工具</Select.Option>
                 <Select.Option value="general">通用 (General) - 其他功能</Select.Option>
               </Select>
@@ -1112,8 +1073,7 @@ export default function MCPPluginsPage() {
                       {tool.description && (
                         <div>
                           <Text type="secondary" style={{ fontSize: isMobile ? '12px' : '13px', display: 'block', marginBottom: 4 }}>
-                            描述：
-                          </Text>
+                            描述：                          </Text>
                           <Paragraph
                             style={{
                               margin: 0,
@@ -1131,8 +1091,7 @@ export default function MCPPluginsPage() {
                       {tool.inputSchema && (
                         <div>
                           <Text type="secondary" style={{ fontSize: isMobile ? '12px' : '13px', display: 'block', marginBottom: 4 }}>
-                            输入参数：
-                          </Text>
+                            输入参数：                          </Text>
                           <pre
                             style={{
                               margin: 0,
@@ -1161,3 +1120,8 @@ export default function MCPPluginsPage() {
     </>
   );
 }
+
+
+
+
+

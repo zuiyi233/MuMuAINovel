@@ -1,5 +1,42 @@
 import type { ThemePlugin } from '../../types';
+import type { ThemeSemanticVars } from '../../../design-system';
 import manifest from './manifest.json';
+
+const semanticVars: ThemeSemanticVars = {
+  'color-primary': '#2C3E50',
+  'color-primary-hover': '#34495E',
+  'color-primary-active': '#1A252F',
+  'color-success': '#27AE60',
+  'color-success-active': '#1F8A4C',
+  'color-warning': '#F39C12',
+  'color-error': '#C0392B',
+  'color-info': '#2980B9',
+  'color-success-bg': '#F4FBF6',
+  'color-success-border': '#BFE8D0',
+  'color-warning-bg': '#FFF8EE',
+  'color-warning-border': '#F6D9A8',
+  'color-error-bg': '#FEF3F2',
+  'color-error-border': '#F6C8C3',
+  'color-info-bg': '#EFF7FC',
+  'color-info-border': '#B9D8ED',
+  'color-bg-base': '#F5F5F0',
+  'color-bg-container': '#FFFFFF',
+  'color-bg-layout': '#EBEBE5',
+  'color-bg-spotlight': '#2C3E50',
+  'color-bg-mask': 'rgba(0, 0, 0, 0.5)',
+  'color-text-base': '#1A1A1A',
+  'color-text-primary': '#1A1A1A',
+  'color-text-secondary': '#4A4A4A',
+  'color-text-tertiary': '#7A7A7A',
+  'color-text-quaternary': '#AAAAAA',
+  'color-border': '#D0D0C8',
+  'color-border-secondary': '#E0E0D8',
+  'color-border-light': '#E7E7DF',
+  'shadow-card': '0 1px 4px rgba(0, 0, 0, 0.04)',
+  'shadow-elevated': '0 4px 16px rgba(44, 62, 80, 0.08)',
+  'shadow-primary': '0 2px 12px rgba(44, 62, 80, 0.15)',
+  'shadow-header': '0 1px 4px rgba(0, 0, 0, 0.04)',
+};
 
 const theme: ThemePlugin = {
   manifest,
@@ -11,7 +48,7 @@ const theme: ThemePlugin = {
       colorTextBase: '#1A1A1A',
       borderRadius: 2,
       wireframe: false,
-      fontFamily: "'Noto Serif SC', 'Source Han Serif SC', 'SimSun', serif",
+      fontFamily: 'var(--font-family-serif)',
     },
     components: {
       Layout: {
@@ -30,31 +67,8 @@ const theme: ThemePlugin = {
     },
   },
 
-  cssVars: {
-    'color-primary': '#2C3E50',
-    'color-primary-hover': '#34495E',
-    'color-primary-active': '#1A252F',
-    'color-success': '#27AE60',
-    'color-warning': '#F39C12',
-    'color-error': '#C0392B',
-    'color-info': '#2980B9',
-    'color-bg-base': '#F5F5F0',
-    'color-bg-container': '#FFFFFF',
-    'color-bg-layout': '#EBEBE5',
-    'color-bg-spotlight': '#2C3E50',
-    'color-bg-mask': 'rgba(0, 0, 0, 0.5)',
-    'color-text-base': '#1A1A1A',
-    'color-text-primary': '#1A1A1A',
-    'color-text-secondary': '#4A4A4A',
-    'color-text-tertiary': '#7A7A7A',
-    'color-text-quaternary': '#AAAAAA',
-    'color-border': '#D0D0C8',
-    'color-border-secondary': '#E0E0D8',
-    'shadow-card': '0 1px 4px rgba(0, 0, 0, 0.04)',
-    'shadow-elevated': '0 4px 16px rgba(44, 62, 80, 0.08)',
-    'shadow-primary': '0 2px 12px rgba(44, 62, 80, 0.15)',
-    'shadow-header': '0 1px 4px rgba(0, 0, 0, 0.04)',
-  },
+  semanticVars,
+  cssVars: semanticVars,
 
   customCSS: `
     /* Ink style specific overrides */

@@ -24,6 +24,7 @@ import {
 import { useStore } from '../store';
 import { writingStyleApi } from '../services/api';
 import type { WritingStyle, WritingStyleCreate, WritingStyleUpdate } from '../types';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
@@ -166,32 +167,26 @@ export default function WritingStyles() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        backgroundColor: '#fff',
-        padding: isMobile ? '12px 0' : '16px 0',
-        marginBottom: isMobile ? 12 : 16,
-        borderBottom: '1px solid #f0f0f0',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
-        <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 24 }}>
-          <EditOutlined style={{ marginRight: 8 }} />
-          写作风格管理
-        </h2>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={showCreateModal}
-        >
-          创建自定义风格
-        </Button>
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <PageHeader
+        title={(
+          <>
+            <EditOutlined style={{ marginRight: 8 }} />
+            写作风格管理
+          </>
+        )}
+        subtitle={currentProject?.title}
+        actions={(
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={showCreateModal}
+          >
+            创建自定义风格
+          </Button>
+        )}
+      />
+<div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <SectionBlock>
         {styles.length === 0 ? (
           <Empty description="暂无风格数据" />
         ) : (
@@ -308,6 +303,7 @@ export default function WritingStyles() {
             ))}
           </Row>
         )}
+        </SectionBlock>
       </div>
 
       {/* 创建自定义风格 Modal */}
@@ -425,3 +421,4 @@ export default function WritingStyles() {
     </div>
   );
 }
+

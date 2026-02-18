@@ -11,6 +11,7 @@ import { characterApi } from '../services/api';
 import { SSEPostClient } from '../utils/sseClient';
 import api from '../services/api';
 import { syncProjectShadow } from '../utils/shadowSync';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -642,95 +643,86 @@ export default function Characters() {
   const isMobile = window.innerWidth <= 768;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      style={{
+        minHeight: '100%',
+        background: 'var(--color-bg-base)',
+        padding: isMobile ? 'var(--space-md) var(--space-sm)' : 'var(--space-lg)',
+      }}
+    >
       {contextHolder}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        backgroundColor: 'var(--color-bg-container)',
-        padding: isMobile ? '12px 0' : '16px 0',
-        marginBottom: isMobile ? 12 : 16,
-        borderBottom: '1px solid var(--color-border-secondary)',
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? 12 : 0,
-        justifyContent: 'space-between',
-        alignItems: isMobile ? 'stretch' : 'center'
-      }}>
-        <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 24 }}>
-          <TeamOutlined style={{ marginRight: 8 }} />
-          角色与组织管理
-        </h2>
-        <Space wrap>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setCreateType('character');
-              setIsCreateModalOpen(true);
-            }}
-            size={isMobile ? 'small' : 'middle'}
-          >
-            创建角色
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setCreateType('organization');
-              setIsCreateModalOpen(true);
-            }}
-            size={isMobile ? 'small' : 'middle'}
-          >
-            创建组织
-          </Button>
-          <Button
-            type="dashed"
-            icon={<ThunderboltOutlined />}
-            onClick={showGenerateModal}
-            loading={isGenerating}
-            size={isMobile ? 'small' : 'middle'}
-          >
-            AI生成角色
-          </Button>
-          <Button
-            type="dashed"
-            icon={<ThunderboltOutlined />}
-            onClick={showGenerateOrgModal}
-            loading={isGenerating}
-            size={isMobile ? 'small' : 'middle'}
-          >
-            AI生成组织
-          </Button>
-          <Button
-            icon={<ImportOutlined />}
-            onClick={() => setIsImportModalOpen(true)}
-            size={isMobile ? 'small' : 'middle'}
-          >
-            导入
-          </Button>
-          {selectedCharacters.length > 0 && (
+      <PageHeader
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+            <TeamOutlined />
+            角色与组织管理
+          </span>
+        }
+        subtitle="统一管理角色、组织及批量导入导出。"
+        actions={
+          <Space wrap>
             <Button
-              icon={<ExportOutlined />}
-              onClick={handleExportSelected}
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setCreateType('character');
+                setIsCreateModalOpen(true);
+              }}
               size={isMobile ? 'small' : 'middle'}
             >
-              批量导出 ({selectedCharacters.length})
+              创建角色
             </Button>
-          )}
-        </Space>
-      </div>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setCreateType('organization');
+                setIsCreateModalOpen(true);
+              }}
+              size={isMobile ? 'small' : 'middle'}
+            >
+              创建组织
+            </Button>
+            <Button
+              type="dashed"
+              icon={<ThunderboltOutlined />}
+              onClick={showGenerateModal}
+              loading={isGenerating}
+              size={isMobile ? 'small' : 'middle'}
+            >
+              AI生成角色
+            </Button>
+            <Button
+              type="dashed"
+              icon={<ThunderboltOutlined />}
+              onClick={showGenerateOrgModal}
+              loading={isGenerating}
+              size={isMobile ? 'small' : 'middle'}
+            >
+              AI生成组织
+            </Button>
+            <Button
+              icon={<ImportOutlined />}
+              onClick={() => setIsImportModalOpen(true)}
+              size={isMobile ? 'small' : 'middle'}
+            >
+              导入
+            </Button>
+            {selectedCharacters.length > 0 && (
+              <Button
+                icon={<ExportOutlined />}
+                onClick={handleExportSelected}
+                size={isMobile ? 'small' : 'middle'}
+              >
+                批量导出 ({selectedCharacters.length})
+              </Button>
+            )}
+          </Space>
+        }
+      />
 
-      {characters.length > 0 && (
-        <div style={{
-          position: 'sticky',
-          top: isMobile ? 60 : 72,
-          zIndex: 9,
-          backgroundColor: 'var(--color-bg-container)',
-          paddingBottom: 8,
-          borderBottom: '1px solid var(--color-border-secondary)',
-        }}>
+      <SectionBlock>
+        {characters.length > 0 && (
           <Tabs
             activeKey={activeTab}
             onChange={(key) => setActiveTab(key as 'all' | 'character' | 'organization')}
@@ -757,43 +749,38 @@ export default function Characters() {
               },
             ]}
           />
-        </div>
-      )}
+        )}
 
-      {/* 批量选择工具栏 */}
-      {characters.length > 0 && (
-        <div style={{
-          position: 'sticky',
-          top: isMobile ? 120 : 132,
-          zIndex: 8,
-          backgroundColor: 'var(--color-bg-container)',
-          paddingBottom: 8,
-          paddingTop: 8,
-          marginTop: 8,
-          borderBottom: selectedCharacters.length > 0 ? '1px solid var(--color-border-secondary)' : 'none',
-        }}>
-          <Space>
-            <Checkbox
-              checked={selectedCharacters.length === displayList.length && displayList.length > 0}
-              indeterminate={selectedCharacters.length > 0 && selectedCharacters.length < displayList.length}
-              onChange={toggleSelectAll}
-            >
-              {selectedCharacters.length > 0 ? `已选 ${selectedCharacters.length} 个` : '全选'}
-            </Checkbox>
-            {selectedCharacters.length > 0 && (
-              <Button
-                type="link"
-                size="small"
-                onClick={() => setSelectedCharacters([])}
+        {characters.length > 0 && (
+          <div
+            style={{
+              marginTop: 'var(--space-sm)',
+              padding: 'var(--space-sm) 0',
+              borderBottom: selectedCharacters.length > 0 ? '1px solid var(--color-border-secondary)' : 'none',
+            }}
+          >
+            <Space>
+              <Checkbox
+                checked={selectedCharacters.length === displayList.length && displayList.length > 0}
+                indeterminate={selectedCharacters.length > 0 && selectedCharacters.length < displayList.length}
+                onChange={toggleSelectAll}
               >
-                取消选择
-              </Button>
-            )}
-          </Space>
-        </div>
-      )}
+                {selectedCharacters.length > 0 ? `已选 ${selectedCharacters.length} 项` : '全选'}
+              </Checkbox>
+              {selectedCharacters.length > 0 && (
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => setSelectedCharacters([])}
+                >
+                  取消选择
+                </Button>
+              )}
+            </Space>
+          </div>
+        )}
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ overflowY: 'auto' }}>
         {characters.length === 0 ? (
           <Empty description="还没有角色或组织，开始创建吧！" />
         ) : (
@@ -945,8 +932,8 @@ export default function Characters() {
             )}
           </>
         )}
-      </div>
-
+        </div>
+      </SectionBlock>
       <Modal
         title={editingCharacter?.is_organization ? '编辑组织' : '编辑角色'}
         open={isEditModalOpen}

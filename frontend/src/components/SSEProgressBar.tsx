@@ -1,54 +1,44 @@
-import React from 'react';
-
 interface SSEProgressBarProps {
   loading: boolean;
   progress: number;
   message: string;
 }
 
-export const SSEProgressBar: React.FC<SSEProgressBarProps> = ({
-  loading,
-  progress,
-  message
-}) => {
+export function SSEProgressBar({ loading, progress, message }: SSEProgressBarProps) {
   if (!loading) return null;
 
+  const safeProgress = Math.max(0, Math.min(100, progress));
+
   return (
-    <div style={{ marginTop: 16 }}>
-      {/* 进度条 */}
-      <div style={{
-        height: 8,
-        background: '#f0f0f0',
-        borderRadius: 4,
-        overflow: 'hidden',
-        marginBottom: 8
-      }}>
-        <div style={{
-          height: '100%',
-          background: progress === 100 ? '#52c41a' : '#1890ff',
-          width: `${progress}%`,
-          transition: 'all 0.3s ease',
-          borderRadius: 4
-        }} />
+    <div style={{ marginTop: 'var(--space-md)' }}>
+      <div
+        style={{
+          height: 8,
+          background: 'var(--color-bg-layout)',
+          borderRadius: 'var(--radius-pill)',
+          overflow: 'hidden',
+          marginBottom: 'var(--space-xs)',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: `${safeProgress}%`,
+            background: safeProgress >= 100 ? 'var(--color-success)' : 'var(--color-info)',
+            borderRadius: 'var(--radius-pill)',
+            transition: 'width var(--motion-duration-base) var(--motion-easing-standard)',
+          }}
+        />
       </div>
-      
-      {/* 进度信息 */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: 14
-      }}>
-        <span style={{ color: '#666' }}>
-          {message || '准备生成...'}
-        </span>
-        <span style={{ 
-          fontWeight: 'bold',
-          color: progress === 100 ? '#52c41a' : '#1890ff'
-        }}>
-          {progress}%
+
+      <div className="u-flex-between" style={{ fontSize: 'var(--font-size-sm)' }}>
+        <span style={{ color: 'var(--color-text-secondary)' }}>{message || '准备生成中...'}</span>
+        <span style={{ fontWeight: 700, color: safeProgress >= 100 ? 'var(--color-success)' : 'var(--color-info)' }}>
+          {safeProgress}%
         </span>
       </div>
     </div>
   );
-};
+}
+
+export default SSEProgressBar;

@@ -1,4 +1,4 @@
-import { Card, Descriptions, Empty, Typography, Button, Modal, Form, Input, message, Flex, InputNumber, Select } from 'antd';
+﻿import { Card, Descriptions, Empty, Typography, Button, Modal, Form, Input, message, Flex, InputNumber, Select } from 'antd';
 import { GlobalOutlined, EditOutlined, SyncOutlined, FormOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { useStore } from '../store';
@@ -6,6 +6,7 @@ import { cardStyles } from '../components/CardStyles';
 import { projectApi, wizardStreamApi } from '../services/api';
 import { syncProjectShadow } from '../utils/shadowSync';
 import { SSELoadingOverlay } from '../components/SSELoadingOverlay';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -147,32 +148,27 @@ export default function WorldSetting() {
   if (!hasWorldSetting) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* 固定头部 */}
-        <div style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          backgroundColor: '#fff',
-          padding: '16px 0',
-          marginBottom: 16,
-          borderBottom: '1px solid var(--color-border-secondary)',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <GlobalOutlined style={{ fontSize: 24, marginRight: 12, color: 'var(--color-primary)' }} />
-          <h2 style={{ margin: 0 }}>世界设定</h2>
-        </div>
+        <PageHeader
+          title={(
+            <>
+              <GlobalOutlined style={{ marginRight: 8 }} />
+              世界设定
+            </>
+          )}
+          subtitle="当前项目尚未生成世界观信息"
+        />
 
-        {/* 可滚动内容区域 */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          <Empty
-            description="暂无世界设定信息"
-            style={{ marginTop: 60 }}
-          >
-            <Paragraph type="secondary">
-              世界设定信息在创建项目向导中生成，用于构建小说的世界观背景。
-            </Paragraph>
-          </Empty>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          <SectionBlock>
+            <Empty
+              description="暂无世界设定信息"
+              style={{ marginTop: 60 }}
+            >
+              <Paragraph type="secondary">
+                世界设定信息在创建项目向导中生成，用于构建小说的世界观背景。
+              </Paragraph>
+            </Empty>
+          </SectionBlock>
         </div>
       </div>
     );
@@ -181,26 +177,15 @@ export default function WorldSetting() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {contextHolder}
-      {/* 固定头部 */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        backgroundColor: '#fff',
-        padding: '16px 0',
-        marginBottom: 24,
-        borderBottom: '1px solid #f0f0f0'
-      }}>
-        <Flex
-          justify="space-between"
-          align="flex-start"
-          gap={12}
-          wrap="wrap"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', minWidth: 'fit-content' }}>
-            <GlobalOutlined style={{ fontSize: 24, marginRight: 12, color: 'var(--color-primary)' }} />
-            <h2 style={{ margin: 0, whiteSpace: 'nowrap' }}>世界设定</h2>
-          </div>
+      <PageHeader
+        title={(
+          <>
+            <GlobalOutlined style={{ marginRight: 8 }} />
+            世界设定
+          </>
+        )}
+        subtitle={currentProject.title}
+        actions={(
           <Flex gap={8} wrap="wrap" style={{ flex: '0 1 auto' }}>
             <Button
               icon={<SyncOutlined />}
@@ -254,11 +239,11 @@ export default function WorldSetting() {
               <span className="button-text-mobile">编辑世界观</span>
             </Button>
           </Flex>
-        </Flex>
-      </div>
+        )}
+      />
 
-      {/* 可滚动内容区域 */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <SectionBlock>
         <Card
           style={{
             ...cardStyles.base,
@@ -370,6 +355,7 @@ export default function WorldSetting() {
             )}
           </div>
         </Card>
+        </SectionBlock>
       </div>
 
       {/* 编辑世界观模态框 */}
@@ -703,3 +689,5 @@ export default function WorldSetting() {
     </div>
   );
 }
+
+

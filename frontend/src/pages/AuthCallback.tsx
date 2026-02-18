@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spin, Result, Button, Modal, Input, message } from 'antd';
 import { authApi } from '../services/api';
 import AnnouncementModal from '../components/AnnouncementModal';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -303,13 +304,21 @@ export default function AuthCallback() {
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #4D8088 0%, #5F9EA8 100%)',
       }}>
-        <Result
-          status="success"
-          title="登录成功"
-          subTitle={showPasswordModal ? "请设置账号密码..." : (showAnnouncement ? "欢迎使用..." : "正在跳转...")}
-          style={{ background: 'white', padding: 40, borderRadius: 8 }}
-        />
+        <div style={{ width: '100%', maxWidth: 520 }}>
+          <PageHeader
+            title="登录成功"
+            subtitle={showPasswordModal ? '请先设置账号密码' : (showAnnouncement ? '欢迎使用' : '正在跳转')}
+          />
+          <SectionBlock>
+            <Result
+              status="success"
+              title="登录成功"
+              subTitle={showPasswordModal ? "请设置账号密码..." : (showAnnouncement ? "欢迎使用..." : "正在跳转...")}
+            />
+          </SectionBlock>
+        </div>
       </div>
     </>
   );
 }
+

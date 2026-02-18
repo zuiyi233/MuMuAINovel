@@ -129,7 +129,8 @@ const asRecord = (value: unknown): Record<string, unknown> => {
 const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
 
 const stripBrowserId = <T extends { browser_id: string }>(entity: T): Omit<T, 'browser_id'> => {
-  const { browser_id: _ignored, ...rest } = entity;
+  const { browser_id, ...rest } = entity;
+  void browser_id;
   return rest;
 };
 

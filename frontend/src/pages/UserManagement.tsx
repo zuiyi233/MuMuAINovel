@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -36,6 +36,7 @@ import {
 import { adminApi } from '../services/api';
 import type { User } from '../types';
 import UserMenu from '../components/UserMenu';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { Title, Text } = Typography;
 
@@ -442,6 +443,16 @@ export default function UserManagement() {
         flexDirection: 'column',
         overflow: 'hidden',
       }}>
+        <PageHeader
+          title={(
+            <>
+              <TeamOutlined style={{ marginRight: 8 }} />
+              用户管理
+            </>
+          )}
+          subtitle="管理系统用户和权限"
+        />
+
         {/* 顶部导航卡片 */}
         <Card
           variant="borderless"
@@ -519,6 +530,7 @@ export default function UserManagement() {
         </Card>
 
         {/* 主内容卡片 */}
+        <SectionBlock>
         <Card
           variant="borderless"
           style={{
@@ -605,6 +617,7 @@ export default function UserManagement() {
             />
           </div>
         </Card>
+        </SectionBlock>
       </div>
 
       {/* 添加用户对话框 */}
@@ -789,3 +802,4 @@ export default function UserManagement() {
     </div>
   );
 }
+

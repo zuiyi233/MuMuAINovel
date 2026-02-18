@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Form, Input, InputNumber, Select, Button, Card,
@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import { AIProjectGenerator, type GenerationConfig } from '../components/AIProjectGenerator';
 import type { WizardBasicInfo } from '../types';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { TextArea } = Input;
 const { Title, Paragraph } = Typography;
@@ -325,66 +326,47 @@ export default function ProjectWizardNew() {
       background: 'var(--color-bg-base)',
     }}>
       {/* 顶部标题栏 - 固定不滚动 */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        background: 'var(--color-primary)',
-        boxShadow: 'var(--shadow-header)',
-      }}>
-        <div style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: isMobile ? '12px 16px' : '16px 24px',
-        }}>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate('/')}
-            size={isMobile ? 'middle' : 'large'}
-            disabled={currentStep === 'generating'}
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              borderColor: 'rgba(255,255,255,0.3)',
-              color: '#fff',
-            }}
-          >
-            {isMobile ? '返回' : '返回首页'}
-          </Button>
-
-          <Title level={isMobile ? 4 : 2} style={{
-            margin: 0,
-            color: '#fff',
-            textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}>
-            <RocketOutlined style={{ marginRight: 8 }} />
-            项目创建向导
-          </Title>
-
-          <div style={{ width: isMobile ? 60 : 120 }}></div>
-        </div>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile ? '12px 16px' : '16px 24px' }}>
+        <PageHeader
+          title={(
+            <>
+              <RocketOutlined style={{ marginRight: 8 }} />
+              项目创建向导
+            </>
+          )}
+          subtitle="填写基础信息并开始 AI 生成"
+          actions={(
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/')}
+              size={isMobile ? 'middle' : 'large'}
+              disabled={currentStep === 'generating'}
+            >
+              {isMobile ? '返回' : '返回首页'}
+            </Button>
+          )}
+        />
       </div>
-
-      {/* 内容区域 */}
       <div style={{
         maxWidth: 800,
         margin: '0 auto',
         padding: isMobile ? '16px 12px' : '24px 24px',
       }}>
-        {currentStep === 'form' && renderForm()}
-        {currentStep === 'generating' && generationConfig && (
-          <AIProjectGenerator
-            config={generationConfig}
-            storagePrefix="wizard"
-            onComplete={handleComplete}
-            onBack={handleBack}
-            isMobile={isMobile}
-            resumeProjectId={resumeProjectId || undefined}
-          />
-        )}
+        <SectionBlock>
+          {currentStep === 'form' && renderForm()}
+          {currentStep === 'generating' && generationConfig && (
+            <AIProjectGenerator
+              config={generationConfig}
+              storagePrefix="wizard"
+              onComplete={handleComplete}
+              onBack={handleBack}
+              isMobile={isMobile}
+              resumeProjectId={resumeProjectId || undefined}
+            />
+          )}
+        </SectionBlock>
       </div>
     </div>
   );
 }
+

@@ -4,10 +4,11 @@ import { ThunderboltOutlined, PlusOutlined, EditOutlined, DeleteOutlined, Trophy
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import SSEProgressModal from '../components/SSEProgressModal';
+import { PageHeader, SectionBlock } from '../components/ui';
 import { syncProjectShadow } from '../utils/shadowSync';
 
 const { TextArea } = Input;
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 interface CareerStage {
     level: number;
@@ -301,58 +302,48 @@ export default function Careers() {
         <>
             {contextHolder}
             <div style={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
-        }}>
-            {/* 固定头部 */}
-            <div style={{
-                padding: '16px 16px 0 16px',
-                flexShrink: 0
-            }}>
-                <div style={{
-                    marginBottom: 16,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '12px'
-                }}>
-                    <Title level={3} style={{ margin: 0 }}>
-                        <TrophyOutlined style={{ marginRight: 8 }} />
-                        职业管理
-                    </Title>
-                    <Space wrap>
-                        <Button
-                            type="dashed"
-                            icon={<ThunderboltOutlined />}
-                            onClick={() => {
-                                aiForm.resetFields();
-                                setIsAIModalOpen(true);
-                            }}
-                        >
-                            AI生成新职业
-                        </Button>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => handleOpenModal()}
-                        >
-                            新增职业
-                        </Button>
-                    </Space>
-                </div>
-            </div>
-
-            {/* 可滚动的内容区域 */}
-            <div style={{
                 flex: 1,
-                overflow: 'auto',
-                padding: '0 16px 16px 16px'
+                minHeight: 0,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
             }}>
-                <Tabs items={tabItems} />
-            </div>
+                <PageHeader
+                    title={(
+                        <>
+                            <TrophyOutlined style={{ marginRight: 8 }} />
+                            职业管理
+                        </>
+                    )}
+                    actions={(
+                        <Space wrap>
+                            <Button
+                                type="dashed"
+                                icon={<ThunderboltOutlined />}
+                                onClick={() => {
+                                    aiForm.resetFields();
+                                    setIsAIModalOpen(true);
+                                }}
+                            >
+                                AI生成新职业
+                            </Button>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => handleOpenModal()}
+                            >
+                                新增职业
+                            </Button>
+                        </Space>
+                    )}
+                />
+
+                <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                    <SectionBlock title={`职业列表 (${mainCareers.length + subCareers.length})`}>
+                        <Tabs items={tabItems} />
+                    </SectionBlock>
+                </div>
 
             {/* 创建/编辑对话框 */}
             <Modal
@@ -463,3 +454,4 @@ export default function Careers() {
         </>
     );
 }
+

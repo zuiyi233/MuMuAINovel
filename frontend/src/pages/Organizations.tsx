@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, Table, Tag, Button, Space, message, Modal, Form, Select, InputNumber, Input, Descriptions, Drawer } from 'antd';
 import { PlusOutlined, UserOutlined, EditOutlined, DeleteOutlined, UnorderedListOutlined, BankOutlined } from '@ant-design/icons';
 import { useStore } from '../store';
 import { useCharacterSync } from '../store/hooks';
 import axios from 'axios';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 interface Organization {
   id: string;
@@ -304,21 +305,19 @@ export default function Organizations() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {contextHolder}
-      
-      {/* 页面标题 - 仅桌面端显示 */}
-      {!isMobile && (
-        <div style={{
-          padding: '16px 0',
-          marginBottom: 16,
-          borderBottom: '1px solid #f0f0f0'
-        }}>
-          <h2 style={{ margin: 0, fontSize: 24 }}>
+
+      <PageHeader
+        title={(
+          <>
             <BankOutlined style={{ marginRight: 8 }} />
-            组织管理
-          </h2>
-        </div>
-      )}
-      
+            缁勭粐绠＄悊
+          </>
+        )}
+        subtitle={currentProject?.title}
+      />
+
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <SectionBlock>
       <div style={{
         flex: 1,
         display: 'flex',
@@ -561,6 +560,8 @@ export default function Organizations() {
           </>
         )}
         </div>
+      </div>
+      </SectionBlock>
       </div>
 
       {/* 添加成员模态框 */}
@@ -843,3 +844,4 @@ export default function Organizations() {
     </div>
   );
 }
+

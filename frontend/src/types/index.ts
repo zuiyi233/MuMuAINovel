@@ -995,3 +995,55 @@ export const PROMPT_CATEGORIES: Record<string, string> = {
   game: '游戏/电竞',
   other: '其他',
 };
+
+// ==================== 设计系统与壳层类型定义 ====================
+
+export type ThemeSemanticColorKey =
+  | 'color-primary'
+  | 'color-primary-hover'
+  | 'color-primary-active'
+  | 'color-success'
+  | 'color-success-active'
+  | 'color-warning'
+  | 'color-error'
+  | 'color-info'
+  | 'color-success-bg'
+  | 'color-success-border'
+  | 'color-warning-bg'
+  | 'color-warning-border'
+  | 'color-error-bg'
+  | 'color-error-border'
+  | 'color-info-bg'
+  | 'color-info-border'
+  | 'color-bg-base'
+  | 'color-bg-container'
+  | 'color-bg-layout'
+  | 'color-bg-spotlight'
+  | 'color-bg-mask'
+  | 'color-text-base'
+  | 'color-text-primary'
+  | 'color-text-secondary'
+  | 'color-text-tertiary'
+  | 'color-text-quaternary'
+  | 'color-border'
+  | 'color-border-secondary'
+  | 'color-border-light';
+
+export type ThemeSemanticShadowKey = 'shadow-card' | 'shadow-elevated' | 'shadow-primary' | 'shadow-header';
+
+export type ThemeSemanticTokenKey = ThemeSemanticColorKey | ThemeSemanticShadowKey;
+
+export type ThemeSemanticTokenMap = Record<ThemeSemanticTokenKey, string>;
+
+export type MotionLevel = 'none' | 'fast' | 'normal' | 'slow';
+
+export interface AppShellNavigationItem {
+  key: string;
+  path?: string;
+  label: string;
+}
+
+export interface UiAsyncState {
+  loading: boolean;
+  error?: string | null;
+}

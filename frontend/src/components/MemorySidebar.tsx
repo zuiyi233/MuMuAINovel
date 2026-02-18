@@ -1,5 +1,6 @@
-import React, { useMemo, useEffect, useRef } from 'react';
-import { Card, Tag, Badge, Empty, Collapse, Divider } from 'antd';
+import { useEffect, useMemo, useRef } from 'react';
+import { Badge, Card, Collapse, Empty, Space, Tag, Typography } from 'antd';
+import type { CollapseProps } from 'antd';
 import {
   FireOutlined,
   StarOutlined,
@@ -8,7 +9,7 @@ import {
 } from '@ant-design/icons';
 import type { MemoryAnnotation } from './AnnotatedText';
 
-const { Panel } = Collapse;
+const { Text } = Typography;
 
 interface MemorySidebarProps {
   annotations: MemoryAnnotation[];
@@ -17,55 +18,77 @@ interface MemorySidebarProps {
   scrollToAnnotation?: string;
 }
 
-// 类型配置
-const TYPE_CONFIG = {
+type AnnotationType = MemoryAnnotation['type'];
+
+type AnnotationTypeConfig = {
+  label: string;
+  icon: JSX.Element;
+  color: string;
+  tagColor: string;
+};
+
+const TYPE_CONFIG: Record<AnnotationType, AnnotationTypeConfig> = {
   hook: {
     label: '钩子',
     icon: <FireOutlined />,
-    color: '#ff6b6b',
+    color: 'var(--color-error)',
+    tagColor: 'red',
   },
   foreshadow: {
     label: '伏笔',
     icon: <StarOutlined />,
-    color: '#6b7bff',
+    color: 'var(--color-info)',
+    tagColor: 'blue',
   },
   plot_point: {
     label: '情节点',
     icon: <ThunderboltOutlined />,
-    color: '#51cf66',
+    color: 'var(--color-success)',
+    tagColor: 'green',
   },
   character_event: {
     label: '角色事件',
     icon: <UserOutlined />,
-    color: '#ffd93d',
+    color: 'var(--color-warning)',
+    tagColor: 'gold',
   },
 };
 
-/**
- * 记忆侧边栏组件
- * 展示章节的所有记忆标注
- */
-const MemorySidebar: React.FC<MemorySidebarProps> = ({
+const TYPE_ORDER: AnnotationType[] = ['hook', 'foreshadow', 'plot_point', 'character_event'];
+
+const normalizeImportance = (importance: number): number => {
+  if (!Number.isFinite(importance)) return 0;
+  return Math.max(0, Math.min(10, importance * 10));
+};
+
+const getPreview = (content: string): string => {
+  const text = content.trim();
+  if (!text) return '无内容';
+  return text.length > 100 ? `${text.slice(0, 100)}...` : text;
+};
+
+const getForeshadowTag = (value?: string) => {
+  if (value === 'planted') return { color: 'blue', label: '已埋入' };
+  if (value === 'resolved') return { color: 'green', label: '已回收' };
+  return null;
+};
+
+const MemorySidebar = ({
   annotations,
   activeAnnotationId,
   onAnnotationClick,
   scrollToAnnotation,
-}) => {
+}: MemorySidebarProps) => {
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // 当需要滚动到特定标注卡片时
   useEffect(() => {
-    if (scrollToAnnotation && cardRefs.current[scrollToAnnotation]) {
-      const element = cardRefs.current[scrollToAnnotation];
-      element?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }
+    if (!scrollToAnnotation) return;
+    const target = cardRefs.current[scrollToAnnotation];
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [scrollToAnnotation]);
-  // 按类型分组
+
   const groupedAnnotations = useMemo(() => {
-    const groups: Record<string, MemoryAnnotation[]> = {
+    const groups: Record<AnnotationType, MemoryAnnotation[]> = {
       hook: [],
       foreshadow: [],
       plot_point: [],
@@ -73,176 +96,174 @@ const MemorySidebar: React.FC<MemorySidebarProps> = ({
     };
 
     annotations.forEach((annotation) => {
-      if (groups[annotation.type]) {
-        groups[annotation.type].push(annotation);
-      }
+      groups[annotation.type].push(annotation);
     });
 
-    // 每组按重要性排序
-    Object.keys(groups).forEach((type) => {
+    TYPE_ORDER.forEach((type) => {
       groups[type].sort((a, b) => b.importance - a.importance);
     });
 
     return groups;
   }, [annotations]);
 
-  // 统计信息
-  const stats = useMemo(() => {
-    return {
-      total: annotations.length,
-      hooks: groupedAnnotations.hook.length,
-      foreshadows: groupedAnnotations.foreshadow.length,
-      plotPoints: groupedAnnotations.plot_point.length,
-      characterEvents: groupedAnnotations.character_event.length,
-    };
-  }, [annotations, groupedAnnotations]);
+  const collapseItems = useMemo<NonNullable<CollapseProps['items']>>(() => {
+    const items: NonNullable<CollapseProps['items']> = [];
 
-  // 渲染单个记忆卡片
-  const renderMemoryCard = (annotation: MemoryAnnotation) => {
-    const config = TYPE_CONFIG[annotation.type];
-    const isActive = activeAnnotationId === annotation.id;
+    TYPE_ORDER.forEach((type) => {
+      const groupItems = groupedAnnotations[type];
+      if (!groupItems.length) return;
+      const config = TYPE_CONFIG[type];
 
+      items.push({
+        key: type,
+        label: (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)', fontWeight: 600 }}>
+            <span style={{ color: config.color, display: 'inline-flex', alignItems: 'center' }}>
+              {config.icon}
+            </span>
+            <span>
+              {config.label} ({groupItems.length})
+            </span>
+          </span>
+        ),
+        children: (
+          <div style={{ marginTop: 'var(--space-xs)' }}>
+            {groupItems.map((annotation) => {
+              const currentConfig = TYPE_CONFIG[annotation.type];
+              const isActive = annotation.id === activeAnnotationId;
+              const importance = normalizeImportance(annotation.importance);
+              const foreshadowTag = getForeshadowTag(annotation.metadata.foreshadowType);
+
+              return (
+                <div
+                  key={annotation.id}
+                  ref={(node) => {
+                    cardRefs.current[annotation.id] = node;
+                  }}
+                >
+                  <Card
+                    size="small"
+                    hoverable
+                    onClick={() => onAnnotationClick?.(annotation)}
+                    styles={{ body: { padding: 'var(--space-sm)' } }}
+                    style={{
+                      marginBottom: 'var(--space-sm)',
+                      borderLeft: `4px solid ${currentConfig.color}`,
+                      borderColor: isActive ? 'var(--color-primary)' : 'var(--color-border-light)',
+                      background: isActive ? 'var(--color-info-bg)' : 'var(--color-bg-container)',
+                      transition:
+                        'transform var(--motion-duration-fast) var(--motion-easing-standard), background var(--motion-duration-fast) var(--motion-easing-standard)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: 'var(--space-sm)',
+                      }}
+                    >
+                      <Space size="small" style={{ alignItems: 'flex-start', minWidth: 0 }}>
+                        <span style={{ color: currentConfig.color, marginTop: 2 }}>{currentConfig.icon}</span>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="u-truncate" style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                            {annotation.title}
+                          </div>
+                          <Text type="secondary" style={{ fontSize: 'var(--font-size-xs)' }}>
+                            重要度 {importance.toFixed(1)}
+                          </Text>
+                        </div>
+                      </Space>
+
+                      <Badge count={importance.toFixed(1)} style={{ background: currentConfig.color }} />
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 'var(--space-xs)',
+                        color: 'var(--color-text-secondary)',
+                        fontSize: 'var(--font-size-xs)',
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {getPreview(annotation.content)}
+                    </div>
+
+                    <Space size={[4, 4]} wrap style={{ marginTop: 'var(--space-xs)' }}>
+                      {annotation.tags.map((tag, index) => (
+                        <Tag key={`${tag}-${index}`} style={{ margin: 0 }}>
+                          {tag}
+                        </Tag>
+                      ))}
+                      {typeof annotation.metadata.strength === 'number' ? (
+                        <Tag color={currentConfig.tagColor} style={{ margin: 0 }}>
+                          强度 {annotation.metadata.strength}/10
+                        </Tag>
+                      ) : null}
+                      {foreshadowTag ? (
+                        <Tag color={foreshadowTag.color} style={{ margin: 0 }}>
+                          {foreshadowTag.label}
+                        </Tag>
+                      ) : null}
+                    </Space>
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
+        ),
+      });
+    });
+
+    return items;
+  }, [activeAnnotationId, groupedAnnotations, onAnnotationClick]);
+
+  if (!annotations.length) {
     return (
-      <div
-        key={annotation.id}
-        ref={(el) => {
-          cardRefs.current[annotation.id] = el;
-        }}
-      >
-        <Card
-          size="small"
-          hoverable
-          onClick={() => onAnnotationClick?.(annotation)}
-          style={{
-            marginBottom: 12,
-            borderLeft: `4px solid ${config.color}`,
-            backgroundColor: isActive ? `${config.color}11` : 'transparent',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-          bodyStyle={{ padding: 12 }}
-        >
-        <div style={{ marginBottom: 8 }}>
-          <Badge
-            count={`${(annotation.importance * 10).toFixed(1)}`}
-            style={{
-              backgroundColor: config.color,
-              float: 'right',
-            }}
-          />
-          <div style={{ fontWeight: 600, fontSize: 14, paddingRight: 50 }}>
-            {config.icon} {annotation.title}
-          </div>
-        </div>
-
-        <div
-          style={{
-            fontSize: 13,
-            color: '#666',
-            lineHeight: 1.6,
-            marginBottom: 8,
-          }}
-        >
-          {annotation.content.length > 100
-            ? `${annotation.content.slice(0, 100)}...`
-            : annotation.content}
-        </div>
-
-        {annotation.tags && annotation.tags.length > 0 && (
-          <div>
-            {annotation.tags.map((tag, index) => (
-              <Tag key={index} style={{ fontSize: 11, margin: '2px 4px 2px 0' }}>
-                {tag}
-              </Tag>
-            ))}
-          </div>
-        )}
-
-        {/* 特殊元数据 */}
-        {annotation.metadata.strength && (
-          <div style={{ marginTop: 4, fontSize: 11, color: '#999' }}>
-            强度: {annotation.metadata.strength}/10
-          </div>
-        )}
-        {annotation.metadata.foreshadowType && (
-          <Tag
-            color={annotation.metadata.foreshadowType === 'planted' ? 'blue' : 'green'}
-            style={{ marginTop: 4 }}
-          >
-            {annotation.metadata.foreshadowType === 'planted' ? '已埋下' : '已回收'}
-          </Tag>
-        )}
-        </Card>
-      </div>
-    );
-  };
-
-  if (annotations.length === 0) {
-    return (
-      <div style={{ padding: 24 }}>
-        <Empty description="暂无分析数据" />
+      <div style={{ padding: 'var(--space-md)' }}>
+        <Empty description="暂无可展示的记忆标注" />
       </div>
     );
   }
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', padding: '16px' }}>
-      {/* 统计概览 */}
-      <Card size="small" style={{ marginBottom: 16 }}>
-        <div style={{ fontWeight: 600, marginBottom: 12 }}>📊 分析概览</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <div>
-            <div style={{ fontSize: 12, color: '#999' }}>钩子</div>
-            <div style={{ fontSize: 20, fontWeight: 600, color: TYPE_CONFIG.hook.color }}>
-              {stats.hooks}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: 12, color: '#999' }}>伏笔</div>
-            <div style={{ fontSize: 20, fontWeight: 600, color: TYPE_CONFIG.foreshadow.color }}>
-              {stats.foreshadows}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: 12, color: '#999' }}>情节点</div>
-            <div style={{ fontSize: 20, fontWeight: 600, color: TYPE_CONFIG.plot_point.color }}>
-              {stats.plotPoints}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: 12, color: '#999' }}>角色事件</div>
-            <div
-              style={{ fontSize: 20, fontWeight: 600, color: TYPE_CONFIG.character_event.color }}
-            >
-              {stats.characterEvents}
-            </div>
-          </div>
+    <div style={{ height: '100%', overflowY: 'auto', padding: 'var(--space-sm)' }}>
+      <Card
+        size="small"
+        style={{
+          marginBottom: 'var(--space-md)',
+          borderRadius: 'var(--radius-md)',
+          borderColor: 'var(--color-border-light)',
+          background: 'var(--color-bg-layout)',
+        }}
+        styles={{ body: { padding: 'var(--space-sm)' } }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 'var(--space-xs)', color: 'var(--color-text-primary)' }}>
+          分析概览
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs)' }}>
+          {TYPE_ORDER.map((type) => {
+            const config = TYPE_CONFIG[type];
+            const count = groupedAnnotations[type].length;
+            return (
+              <div key={type}>
+                <Text type="secondary" style={{ fontSize: 'var(--font-size-xs)' }}>
+                  {config.label}
+                </Text>
+                <div style={{ color: config.color, fontSize: 'var(--font-size-lg)', fontWeight: 600 }}>
+                  {count}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
 
-      <Divider style={{ margin: '16px 0' }} />
-
-      {/* 分类展示 */}
-      <Collapse defaultActiveKey={['hook', 'foreshadow', 'plot_point']} ghost>
-        {Object.entries(groupedAnnotations).map(([type, items]) => {
-          if (items.length === 0) return null;
-
-          const config = TYPE_CONFIG[type as keyof typeof TYPE_CONFIG];
-
-          return (
-            <Panel
-              key={type}
-              header={
-                <span style={{ fontWeight: 600 }}>
-                  {config.icon} {config.label} ({items.length})
-                </span>
-              }
-            >
-              {items.map((annotation) => renderMemoryCard(annotation))}
-            </Panel>
-          );
-        })}
-      </Collapse>
+      <Collapse
+        ghost
+        defaultActiveKey={['hook', 'foreshadow', 'plot_point']}
+        items={collapseItems}
+      />
     </div>
   );
 };

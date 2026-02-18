@@ -4,8 +4,9 @@ import { Card, Input, Button, Space, Typography, message, Spin, Modal } from 'an
 import { SendOutlined, ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { inspirationApi } from '../services/api';
 import { AIProjectGenerator, type GenerationConfig } from '../components/AIProjectGenerator';
+import { PageHeader, SectionBlock } from '../components/ui';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 type Step = 'idea' | 'title' | 'description' | 'theme' | 'genre' | 'perspective' | 'outline_mode' | 'confirm' | 'generating' | 'complete';
@@ -827,6 +828,22 @@ const Inspiration: React.FC = () => {
     navigate('/projects');
   };
 
+  const canRestart = currentStep !== 'idea' && currentStep !== 'generating' && currentStep !== 'complete';
+
+  const handleConfirmRestart = () => {
+    modal.confirm({
+      title: '确认重新开始',
+      content: '确定要重新开始吗？当前的对话进度将会丢失。',
+      okText: '确认',
+      cancelText: '取消',
+      centered: true,
+      okButtonProps: { danger: true },
+      onOk: () => {
+        handleRestart();
+      },
+    });
+  };
+
   // 生成完成回调
   const handleComplete = (projectId: string) => {
     console.log('灵感模式项目创建完成:', projectId);
@@ -1057,10 +1074,13 @@ const Inspiration: React.FC = () => {
   );
 
   return (
-    <div style={{
-      minHeight: '100dvh',
-      background: 'var(--color-bg-base)',
-    }}>
+    <div
+      style={{
+        minHeight: '100%',
+        background: 'var(--color-bg-base)',
+        padding: isMobile ? 'var(--space-md) var(--space-sm)' : 'var(--space-lg)',
+      }}
+    >
       {contextHolder}
       <style>
         {`
@@ -1074,7 +1094,7 @@ const Inspiration: React.FC = () => {
               transform: translateY(0);
             }
           }
-          
+
           @keyframes floatIn {
             0% {
               opacity: 0;
@@ -1088,7 +1108,7 @@ const Inspiration: React.FC = () => {
               transform: translateY(0) scale(1);
             }
           }
-          
+
           @keyframes fadeIn {
             from {
               opacity: 0;
@@ -1100,98 +1120,46 @@ const Inspiration: React.FC = () => {
         `}
       </style>
 
-      {/* 顶部标题栏 - 固定不滚动 */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        background: 'var(--color-primary)',
-        boxShadow: 'var(--shadow-header)',
-      }}>
-        <div style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: isMobile ? '12px 16px' : '16px 24px',
-        }}>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={handleBack}
-            size={isMobile ? 'middle' : 'large'}
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              borderColor: 'rgba(255,255,255,0.3)',
-              color: '#fff',
-            }}
-          >
-            {isMobile ? '返回' : '返回首页'}
-          </Button>
+      <div style={{ maxWidth: 980, margin: '0 auto' }}>
+        <PageHeader
+          title="✨ 灵感模式"
+          subtitle="通过多轮对话快速生成项目设定，并无缝衔接到项目创建流程。"
+          actions={
+            <>
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={handleBack}
+                size={isMobile ? 'middle' : 'large'}
+              >
+                {isMobile ? '返回' : '返回首页'}
+              </Button>
+              {canRestart ? (
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={handleConfirmRestart}
+                  size={isMobile ? 'middle' : 'large'}
+                >
+                  {isMobile ? '重置' : '重新开始'}
+                </Button>
+              ) : null}
+            </>
+          }
+        />
 
-          <div style={{ textAlign: 'center' }}>
-            <Title
-              level={isMobile ? 4 : 2}
-              style={{
-                margin: 0,
-                color: '#fff',
-                textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                lineHeight: 1.2
-              }}
-            >
-              ✨ 灵感模式
-            </Title>
-          </div>
-
-          {/* 重新开始按钮 - 只在对话进行中显示 */}
-          {currentStep !== 'idea' && currentStep !== 'generating' && currentStep !== 'complete' ? (
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => {
-                modal.confirm({
-                  title: '确认重新开始',
-                  content: '确定要重新开始吗？当前的对话进度将会丢失。',
-                  okText: '确认',
-                  cancelText: '取消',
-                  centered: true,
-                  okButtonProps: { danger: true },
-                  onOk: () => {
-                    handleRestart();
-                  },
-                });
-              }}
-              size={isMobile ? 'middle' : 'large'}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                borderColor: 'rgba(255,255,255,0.3)',
-                color: '#fff',
-              }}
-            >
-              {isMobile ? '重新' : '重新开始'}
-            </Button>
-          ) : (
-            <div style={{ width: isMobile ? 60 : 120 }}></div>
+        <SectionBlock>
+          {(currentStep === 'idea' || currentStep === 'title' || currentStep === 'description' ||
+            currentStep === 'theme' || currentStep === 'genre' || currentStep === 'perspective' ||
+            currentStep === 'outline_mode' || currentStep === 'confirm') && renderChat()}
+          {(currentStep === 'generating' || currentStep === 'complete') && generationConfig && (
+            <AIProjectGenerator
+              config={generationConfig}
+              storagePrefix="inspiration"
+              onComplete={handleComplete}
+              onBack={handleBackToChat}
+              isMobile={isMobile}
+            />
           )}
-        </div>
-      </div>
-
-      <div style={{
-        maxWidth: 800,
-        margin: '0 auto',
-        padding: isMobile ? '16px 12px' : '24px 24px',
-      }}>
-        {(currentStep === 'idea' || currentStep === 'title' || currentStep === 'description' ||
-          currentStep === 'theme' || currentStep === 'genre' || currentStep === 'perspective' ||
-          currentStep === 'outline_mode' || currentStep === 'confirm') && renderChat()}
-        {(currentStep === 'generating' || currentStep === 'complete') && generationConfig && (
-          <AIProjectGenerator
-            config={generationConfig}
-            storagePrefix="inspiration"
-            onComplete={handleComplete}
-            onBack={handleBackToChat}
-            isMobile={isMobile}
-          />
-        )}
+        </SectionBlock>
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import FloatingIndexPanel from '../components/FloatingIndexPanel';
 import ChapterReader from '../components/ChapterReader';
 import PartialRegenerateToolbar from '../components/PartialRegenerateToolbar';
 import PartialRegenerateModal from '../components/PartialRegenerateModal';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { TextArea } = Input;
 
@@ -1795,69 +1796,70 @@ export default function Chapters() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      style={{
+        minHeight: '100%',
+        background: 'var(--color-bg-base)',
+        padding: isMobile ? 'var(--space-md) var(--space-sm)' : 'var(--space-lg)',
+      }}
+    >
       {contextHolder}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        backgroundColor: 'var(--color-bg-container)',
-        padding: isMobile ? '12px 0' : '16px 0',
-        marginBottom: isMobile ? 12 : 16,
-        borderBottom: '1px solid #f0f0f0',
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? 12 : 0,
-        justifyContent: 'space-between',
-        alignItems: isMobile ? 'stretch' : 'center'
-      }}>
-        <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 24 }}>
-          <BookOutlined style={{ marginRight: 8 }} />
-          章节管理
-        </h2>
-        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
-          {currentProject.outline_mode === 'one-to-many' && (
-            <Button
-              icon={<PlusOutlined />}
-              onClick={showManualCreateChapterModal}
-              block={isMobile}
-              size={isMobile ? 'middle' : 'middle'}
-            >
-              手动创建
-            </Button>
-          )}
-          <Button
-            type="primary"
-            icon={<RocketOutlined />}
-            onClick={handleOpenBatchGenerate}
-            disabled={chapters.length === 0}
-            block={isMobile}
-            size={isMobile ? 'middle' : 'middle'}
-            style={{ background: '#722ed1', borderColor: '#722ed1' }}
-          >
-            批量生成
-          </Button>
-          <Button
-            type="default"
-            icon={<DownloadOutlined />}
-            onClick={handleExport}
-            disabled={chapters.length === 0}
-            block={isMobile}
-            size={isMobile ? 'middle' : 'middle'}
-          >
-            导出为TXT
-          </Button>
-          {!isMobile && (
+      <PageHeader
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+            <BookOutlined />
+            章节管理
+          </span>
+        }
+        subtitle="章节创作、批量生成与导出管理。"
+        metrics={
+          !isMobile ? (
             <Tag color="blue">
               {currentProject.outline_mode === 'one-to-one'
                 ? '传统模式：章节由大纲管理，请在大纲页面操作'
                 : '细化模式：章节可在大纲页面展开'}
             </Tag>
-          )}
-        </Space>
-      </div>
+          ) : undefined
+        }
+        actions={
+          <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+            {currentProject.outline_mode === 'one-to-many' && (
+              <Button
+                icon={<PlusOutlined />}
+                onClick={showManualCreateChapterModal}
+                block={isMobile}
+                size="middle"
+              >
+                手动创建
+              </Button>
+            )}
+            <Button
+              type="primary"
+              icon={<RocketOutlined />}
+              onClick={handleOpenBatchGenerate}
+              disabled={chapters.length === 0}
+              block={isMobile}
+              size="middle"
+              style={{ background: '#722ed1', borderColor: '#722ed1' }}
+            >
+              批量生成
+            </Button>
+            <Button
+              type="default"
+              icon={<DownloadOutlined />}
+              onClick={handleExport}
+              disabled={chapters.length === 0}
+              block={isMobile}
+              size="middle"
+            >
+              导出为TXT
+            </Button>
+          </Space>
+        }
+      />
 
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <SectionBlock>
+        <div style={{ overflowY: 'auto', minHeight: 0 }}>
         {chapters.length === 0 ? (
           <Empty description="还没有章节，开始创作吧！" />
         ) : currentProject.outline_mode === 'one-to-one' ? (
@@ -2260,7 +2262,8 @@ export default function Chapters() {
             ))}
           </Collapse>
         )}
-      </div>
+        </div>
+      </SectionBlock>
 
       <Modal
         title={editingId ? '编辑章节信息' : '添加章节'}

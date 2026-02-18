@@ -46,7 +46,8 @@ const withBrowserScope = <T extends { id: string }>(
 });
 
 const stripBrowserId = <T extends { browser_id?: string }>(entity: T): Omit<T, 'browser_id'> => {
-  const { browser_id: _browserId, ...rest } = entity;
+  const { browser_id, ...rest } = entity;
+  void browser_id;
   return rest;
 };
 
@@ -412,4 +413,3 @@ export const localShadowDump = {
     return payload;
   },
 };
-

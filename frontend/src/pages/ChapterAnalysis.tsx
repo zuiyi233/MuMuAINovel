@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, List, Button, Space, Empty, Tag, Spin, Alert, Switch, Drawer, message } from 'antd';
 import {
   EyeOutlined,
@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import AnnotatedText, { type MemoryAnnotation } from '../components/AnnotatedText';
 import MemorySidebar from '../components/MemorySidebar';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 interface ChapterItem {
   id: string;
@@ -191,20 +192,18 @@ const ChapterAnalysis: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* 页面标题 - 仅桌面端显示 */}
-      {!isMobile && (
-        <div style={{
-          padding: '16px 0',
-          marginBottom: 16,
-          borderBottom: '1px solid #f0f0f0'
-        }}>
-          <h2 style={{ margin: 0, fontSize: 24 }}>
+      <PageHeader
+        title={(
+          <>
             <FundOutlined style={{ marginRight: 8 }} />
             剧情分析
-          </h2>
-        </div>
-      )}
-      
+          </>
+        )}
+        subtitle="章节内容与记忆标注分析"
+      />
+
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <SectionBlock>
       <div style={{
         flex: 1,
         display: 'flex',
@@ -549,8 +548,11 @@ const ChapterAnalysis: React.FC = () => {
         )}
         </div>
       </div>
+      </SectionBlock>
+      </div>
     </div>
   );
 };
 
 export default ChapterAnalysis;
+

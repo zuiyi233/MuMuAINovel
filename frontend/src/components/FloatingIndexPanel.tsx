@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
-import { Drawer, Input, List, Typography, Empty, Tag } from 'antd';
+import { useMemo, useState } from 'react';
+import { Drawer, Empty, Input, List, Tag, Typography } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import type { Chapter } from '../types';
 
-const { Link } = Typography;
+const { Link, Text } = Typography;
 
 interface GroupedChapters {
   outlineId: string | null;
@@ -27,18 +27,15 @@ export default function FloatingIndexPanel({
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredGroups = useMemo(() => {
-    if (!searchTerm) {
-      return groupedChapters;
-    }
+    if (!searchTerm) return groupedChapters;
+    const keyword = searchTerm.toLowerCase();
     return groupedChapters
-      .map(group => {
-        const filteredChapters = group.chapters.filter(chapter =>
-          chapter.title.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        return { ...group, chapters: filteredChapters };
-      })
-      .filter(group => group.chapters.length > 0);
-  }, [searchTerm, groupedChapters]);
+      .map((group) => ({
+        ...group,
+        chapters: group.chapters.filter((chapter) => chapter.title.toLowerCase().includes(keyword)),
+      }))
+      .filter((group) => group.chapters.length > 0);
+  }, [groupedChapters, searchTerm]);
 
   const handleChapterClick = (chapterId: string) => {
     onChapterSelect(chapterId);
@@ -51,12 +48,16 @@ export default function FloatingIndexPanel({
       placement="right"
       onClose={onClose}
       open={visible}
-      width={320}
-      styles={{
-        body: { padding: 0 },
-      }}
+      width={340}
+      styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column' } }}
     >
-      <div style={{ padding: '16px', borderBottom: '1px solid #f0f0f0' }}>
+      <div
+        style={{
+          padding: 'var(--space-md)',
+          borderBottom: '1px solid var(--color-border-light)',
+          background: 'var(--color-bg-container)',
+        }}
+      >
         <Input
           placeholder="搜索章节标题"
           prefix={<SearchOutlined />}
@@ -66,34 +67,36 @@ export default function FloatingIndexPanel({
         />
       </div>
 
-      {filteredGroups.length > 0 ? (
+      {filteredGroups.length ? (
         <List
           dataSource={filteredGroups}
-          renderItem={group => (
-            <List.Item style={{ padding: '0 16px', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ padding: '12px 0', fontWeight: 'bold' }}>
-                <Tag color={group.outlineId ? 'blue' : 'default'}>
+          renderItem={(group) => (
+            <List.Item style={{ padding: '0 var(--space-md)', display: 'block' }}>
+              <div style={{ padding: 'var(--space-sm) 0 var(--space-xs)' }}>
+                <Tag color={group.outlineId ? 'blue' : 'default'} style={{ margin: 0 }}>
                   {group.outlineTitle}
                 </Tag>
               </div>
               <List
                 size="small"
+                split={false}
                 dataSource={group.chapters}
-                renderItem={chapter => (
-                  <List.Item style={{ paddingLeft: 16, borderBlockStart: 'none' }}>
+                renderItem={(chapter) => (
+                  <List.Item style={{ padding: '4px 0 6px var(--space-md)' }}>
                     <Link onClick={() => handleChapterClick(chapter.id)}>
-                      {`第${chapter.chapter_number}章: ${chapter.title}`}
+                      第 {chapter.chapter_number} 章 · {chapter.title}
                     </Link>
                   </List.Item>
                 )}
-                split={false}
               />
             </List.Item>
           )}
-          style={{ height: 'calc(100vh - 120px)', overflowY: 'auto' }}
+          style={{ flex: 1, overflowY: 'auto' }}
         />
       ) : (
-        <Empty description="没有找到匹配的章节" style={{ marginTop: 48 }} />
+        <div className="u-flex-center" style={{ flex: 1, padding: 'var(--space-2xl)' }}>
+          <Empty description={<Text type="secondary">未找到匹配章节</Text>} />
+        </div>
       )}
     </Drawer>
   );

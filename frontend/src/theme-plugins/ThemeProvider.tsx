@@ -3,6 +3,7 @@ import { ConfigProvider } from 'antd';
 import type { ThemePlugin } from './types';
 import { getAvailableThemes, loadTheme } from './index';
 import { useThemeStore } from './store';
+import { getAntdThemeConfig, getThemeCssVars, motion, type ThemeId } from '../design-system';
 
 function normalizeCssVarKey(key: string): string {
   const k = key.trim();
@@ -56,7 +57,27 @@ export function ThemeProvider(props: { children: React.ReactNode }) {
     };
   }, [currentThemeId, setLoading, setError]);
 
-  const antdTheme = useMemo(() => loadedTheme?.antdTheme, [loadedTheme]);
+  const antdTheme = useMemo(() => {
+    const themeId = (loadedTheme?.manifest?.id || currentThemeId || 'default') as ThemeId;
+    const baseTheme = getAntdThemeConfig(themeId);
+
+    if (!loadedTheme?.antdTheme) {
+      return baseTheme;
+    }
+
+    return {
+      ...baseTheme,
+      ...loadedTheme.antdTheme,
+      token: {
+        ...baseTheme.token,
+        ...loadedTheme.antdTheme.token,
+      },
+      components: {
+        ...baseTheme.components,
+        ...loadedTheme.antdTheme.components,
+      },
+    };
+  }, [loadedTheme, currentThemeId]);
 
   useEffect(() => {
     if (!loadedTheme) return;
@@ -68,8 +89,18 @@ export function ThemeProvider(props: { children: React.ReactNode }) {
     appliedCssVarKeys.current.forEach((k) => root.style.removeProperty(k));
     appliedCssVarKeys.current.clear();
 
-    const baseVars = loadedTheme.cssVars || {};
-    const featureVars = loadedTheme.featureOverrides?.[currentFeatureKey || 'global']?.cssVars || {};
+    const themeId = (loadedTheme.manifest?.id || currentThemeId || 'default') as ThemeId;
+    const baseDesignVars = getThemeCssVars(themeId);
+    const baseVars = {
+      ...baseDesignVars,
+      ...(loadedTheme.semanticVars || {}),
+      ...(loadedTheme.cssVars || {}),
+    };
+    const featureOverride = loadedTheme.featureOverrides?.[currentFeatureKey || 'global'];
+    const featureVars = {
+      ...(featureOverride?.semanticVars || {}),
+      ...(featureOverride?.cssVars || {}),
+    };
     const mergedVars = { ...baseVars, ...featureVars };
 
     Object.entries(mergedVars).forEach(([key, value]) => {
@@ -81,12 +112,14 @@ export function ThemeProvider(props: { children: React.ReactNode }) {
 
     const styleEl = ensureThemeStyleEl();
     const baseCSS = loadedTheme.customCSS || '';
-    const featureCSS = loadedTheme.featureOverrides?.[currentFeatureKey || 'global']?.customCSS || '';
+    const featureCSS = featureOverride?.customCSS || '';
 
-    const motion = loadedTheme.motion;
-    const enableMotion = Boolean(motion?.enablePageTransition);
-    const durationMs = motion?.durationMs ?? 420;
-    const easing = motion?.easing ?? 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+    const pluginMotion = loadedTheme.motion;
+    const motionLevel = pluginMotion?.level ?? 'normal';
+    const dsMotion = motion[motionLevel];
+    const enableMotion = Boolean(pluginMotion?.enablePageTransition);
+    const durationMs = pluginMotion?.durationMs ?? dsMotion.durationMs;
+    const easing = pluginMotion?.easing ?? dsMotion.easing;
 
     setPageTransition(enableMotion, durationMs);
 
@@ -105,7 +138,7 @@ export function ThemeProvider(props: { children: React.ReactNode }) {
       : '';
 
     styleEl.textContent = [baseCSS, featureCSS, motionCSS].filter(Boolean).join('\n\n');
-  }, [loadedTheme, currentFeatureKey, setPageTransition]);
+  }, [loadedTheme, currentThemeId, currentFeatureKey, setPageTransition]);
 
   return (
     <ConfigProvider theme={antdTheme}>

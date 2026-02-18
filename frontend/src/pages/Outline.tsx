@@ -8,6 +8,7 @@ import { SSEProgressModal } from '../components/SSEProgressModal';
 import { syncProjectShadow } from '../utils/shadowSync';
 import { outlineApi, chapterApi, projectApi, characterApi } from '../services/api';
 import type { OutlineExpansionResponse, BatchOutlineExpansionResponse, ChapterPlanItem, ApiError, Character } from '../types';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 // 大纲生成请求数据类型
 interface OutlineGenerateRequestData {
@@ -1904,66 +1905,62 @@ export default function Outline() {
         title="AI生成中..."
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* 固定头部 */}
-        <div style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          backgroundColor: 'var(--color-bg-container)',
-          padding: isMobile ? '12px 0' : '16px 0',
-          marginBottom: isMobile ? 12 : 16,
-          borderBottom: '1px solid #f0f0f0',
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? 12 : 0,
-          justifyContent: 'space-between',
-          alignItems: isMobile ? 'stretch' : 'center'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 24 }}>
-              <FileTextOutlined style={{ marginRight: 8 }} />
+      <div
+        style={{
+          minHeight: '100%',
+          background: 'var(--color-bg-base)',
+          padding: isMobile ? 'var(--space-md) var(--space-sm)' : 'var(--space-lg)',
+        }}
+      >
+        <PageHeader
+          title={
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+              <FileTextOutlined />
               故事大纲
-            </h2>
-            {currentProject?.outline_mode && (
-              <Tag color={currentProject.outline_mode === 'one-to-one' ? 'blue' : 'green'} style={{ width: 'fit-content' }}>
+            </span>
+          }
+          subtitle="管理大纲、展开章节并衔接后续创作流程。"
+          metrics={
+            currentProject?.outline_mode ? (
+              <Tag color={currentProject.outline_mode === 'one-to-one' ? 'blue' : 'green'}>
                 {currentProject.outline_mode === 'one-to-one' ? '传统模式 (1→1)' : '细化模式 (1→N)'}
               </Tag>
-            )}
-          </div>
-          <Space size="small" wrap={isMobile}>
-            <Button
-              icon={<PlusOutlined />}
-              onClick={showManualCreateOutlineModal}
-              block={isMobile}
-            >
-              手动创建
-            </Button>
-            <Button
-              type="primary"
-              icon={<ThunderboltOutlined />}
-              onClick={showGenerateModal}
-              loading={isGenerating}
-              block={isMobile}
-            >
-              {isMobile ? 'AI生成/续写' : 'AI生成/续写大纲'}
-            </Button>
-            {outlines.length > 0 && currentProject?.outline_mode === 'one-to-many' && (
+            ) : undefined
+          }
+          actions={
+            <Space size="small" wrap={isMobile}>
               <Button
-                icon={<AppstoreAddOutlined />}
-                onClick={handleBatchExpandOutlines}
-                loading={isExpanding}
-                disabled={isGenerating}
-                title="将所有大纲展开为多章，实现从大纲到章节的一对多关系"
+                icon={<PlusOutlined />}
+                onClick={showManualCreateOutlineModal}
+                block={isMobile}
               >
-                {isMobile ? '批量展开' : '批量展开为多章'}
+                手动创建
               </Button>
-            )}
-          </Space>
-        </div>
+              <Button
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                onClick={showGenerateModal}
+                loading={isGenerating}
+                block={isMobile}
+              >
+                {isMobile ? 'AI生成/续写' : 'AI生成/续写大纲'}
+              </Button>
+              {outlines.length > 0 && currentProject?.outline_mode === 'one-to-many' && (
+                <Button
+                  icon={<AppstoreAddOutlined />}
+                  onClick={handleBatchExpandOutlines}
+                  loading={isExpanding}
+                  disabled={isGenerating}
+                  title="将所有大纲展开为多章，实现从大纲到章节的一对多关系"
+                >
+                  {isMobile ? '批量展开' : '批量展开为多章'}
+                </Button>
+              )}
+            </Space>
+          }
+        />
 
-        {/* 可滚动内容区域 */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <SectionBlock>
           {outlines.length === 0 ? (
             <Empty description="还没有大纲，开始创建吧！" />
           ) : (
@@ -2734,7 +2731,7 @@ export default function Outline() {
                 }}
               />
           )}
-        </div>
+        </SectionBlock>
       </div>
     </>
   );

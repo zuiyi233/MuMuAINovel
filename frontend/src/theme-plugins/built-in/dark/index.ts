@@ -1,5 +1,42 @@
 import type { ThemePlugin } from '../../types';
+import type { ThemeSemanticVars } from '../../../design-system';
 import manifest from './manifest.json';
+
+const semanticVars: ThemeSemanticVars = {
+  'color-primary': '#70B8C2',
+  'color-primary-hover': '#8FC9D1',
+  'color-primary-active': '#5A9BA5',
+  'color-success': '#52C41A',
+  'color-success-active': '#95DE64',
+  'color-warning': '#FAAD14',
+  'color-error': '#FF7875',
+  'color-info': '#69B1FF',
+  'color-success-bg': '#162312',
+  'color-success-border': '#274916',
+  'color-warning-bg': '#2B2111',
+  'color-warning-border': '#594214',
+  'color-error-bg': '#2A1215',
+  'color-error-border': '#58181C',
+  'color-info-bg': '#111D2C',
+  'color-info-border': '#15395B',
+  'color-bg-base': '#141414',
+  'color-bg-container': '#1F1F1F',
+  'color-bg-layout': '#0F0F0F',
+  'color-bg-spotlight': '#2A2A2A',
+  'color-bg-mask': 'rgba(0, 0, 0, 0.65)',
+  'color-text-base': '#E8E8E8',
+  'color-text-primary': '#E8E8E8',
+  'color-text-secondary': '#A8A8A8',
+  'color-text-tertiary': '#737373',
+  'color-text-quaternary': '#595959',
+  'color-border': '#434343',
+  'color-border-secondary': '#303030',
+  'color-border-light': '#2A2A2A',
+  'shadow-card': '0 2px 8px rgba(0, 0, 0, 0.3)',
+  'shadow-elevated': '0 8px 24px rgba(0, 0, 0, 0.4)',
+  'shadow-primary': '0 4px 16px rgba(112, 184, 194, 0.25)',
+  'shadow-header': '0 2px 8px rgba(0, 0, 0, 0.3)',
+};
 
 const theme: ThemePlugin = {
   manifest,
@@ -25,31 +62,8 @@ const theme: ThemePlugin = {
     },
   },
 
-  cssVars: {
-    'color-primary': '#70B8C2',
-    'color-primary-hover': '#8FC9D1',
-    'color-primary-active': '#5A9BA5',
-    'color-success': '#52C41A',
-    'color-warning': '#FAAD14',
-    'color-error': '#FF4D4F',
-    'color-info': '#1890FF',
-    'color-bg-base': '#141414',
-    'color-bg-container': '#1F1F1F',
-    'color-bg-layout': '#0F0F0F',
-    'color-bg-spotlight': '#2A2A2A',
-    'color-bg-mask': 'rgba(0, 0, 0, 0.65)',
-    'color-text-base': '#E8E8E8',
-    'color-text-primary': '#E8E8E8',
-    'color-text-secondary': '#A8A8A8',
-    'color-text-tertiary': '#737373',
-    'color-text-quaternary': '#595959',
-    'color-border': '#434343',
-    'color-border-secondary': '#303030',
-    'shadow-card': '0 2px 8px rgba(0, 0, 0, 0.3)',
-    'shadow-elevated': '0 8px 24px rgba(0, 0, 0, 0.4)',
-    'shadow-primary': '0 4px 16px rgba(112, 184, 194, 0.25)',
-    'shadow-header': '0 2px 8px rgba(0, 0, 0, 0.3)',
-  },
+  semanticVars,
+  cssVars: semanticVars,
 
   customCSS: `
     /* Dark mode specific overrides */

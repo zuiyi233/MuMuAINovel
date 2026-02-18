@@ -1,4 +1,5 @@
 import type { ThemeConfig } from 'antd';
+import type { MotionLevel, ThemeSemanticVars } from '../design-system';
 
 export interface ThemeManifest {
   id: string;
@@ -13,11 +14,13 @@ export interface ThemeManifest {
 export interface ThemePlugin {
   manifest: ThemeManifest;
   antdTheme: ThemeConfig;
+  semanticVars?: Partial<ThemeSemanticVars>;
   cssVars?: Record<string, string>;
   customCSS?: string;
   featureOverrides?: Record<
     string,
     {
+      semanticVars?: Partial<ThemeSemanticVars>;
       cssVars?: Record<string, string>;
       customCSS?: string;
     }
@@ -26,6 +29,7 @@ export interface ThemePlugin {
     enablePageTransition?: boolean;
     durationMs?: number;
     easing?: string;
+    level?: MotionLevel;
   };
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Spin, Alert, Button, Space, Switch, Drawer, message, Progress } from 'antd';
 import {
@@ -13,6 +13,7 @@ import {
 import api from '../services/api';
 import AnnotatedText, { type MemoryAnnotation } from '../components/AnnotatedText';
 import MemorySidebar from '../components/MemorySidebar';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 interface ChapterData {
   id: string;
@@ -250,6 +251,13 @@ const ChapterReader: React.FC = () => {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <PageHeader
+        title={`第${chapter.chapter_number}章 ${chapter.title}`}
+        subtitle="章节阅读与分析标注"
+      />
+
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <SectionBlock>
       {/* 顶部工具栏 */}
       <Card
         size="small"
@@ -433,6 +441,9 @@ const ChapterReader: React.FC = () => {
       </div>
 
       {/* 移动端抽屉 */}
+      </SectionBlock>
+      </div>
+
       {hasAnnotations && annotationsData && (
         <Drawer
           title="章节分析"
@@ -456,3 +467,4 @@ const ChapterReader: React.FC = () => {
 };
 
 export default ChapterReader;
+

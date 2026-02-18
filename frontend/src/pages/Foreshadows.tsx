@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Card, Table, Button, Tag, Space, Modal, Form, Input, Select,
@@ -17,6 +17,7 @@ import type {
   Foreshadow, ForeshadowCreate, ForeshadowUpdate, ForeshadowStats,
   ForeshadowStatus, ForeshadowCategory, Chapter, Character
 } from '../types';
+import { PageHeader, SectionBlock } from '../components/ui';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -498,7 +499,18 @@ export default function Foreshadows() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* 统计卡片 */}
+      <PageHeader
+        title={(
+          <>
+            <FlagOutlined style={{ marginRight: 8 }} />
+            伏笔管理
+          </>
+        )}
+        subtitle="跟踪伏笔埋设、回收与状态"
+      />
+
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <SectionBlock>{/* 统计卡片 */}
       {stats && (
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col span={3}>
@@ -680,6 +692,9 @@ export default function Foreshadows() {
           showTotal={(total) => `共 ${total} 条`}
           showQuickJumper
         />
+      </div>
+
+      </SectionBlock>
       </div>
 
       {/* 创建/编辑模态框 */}
@@ -1020,3 +1035,4 @@ export default function Foreshadows() {
     </div>
   );
 }
+

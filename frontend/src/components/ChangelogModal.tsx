@@ -1,34 +1,36 @@
-import { Modal, Timeline, Tag, Avatar, Empty, Spin, Button, Space } from 'antd';
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Avatar, Button, Empty, Modal, Space, Spin, Tag, Timeline, Typography } from 'antd';
 import {
-  BugOutlined,
-  StarOutlined,
-  FileTextOutlined,
   BgColorsOutlined,
-  ThunderboltOutlined,
-  ExperimentOutlined,
-  ToolOutlined,
-  QuestionCircleOutlined,
-  GithubOutlined,
-  ReloadOutlined,
+  BugOutlined,
   ClockCircleOutlined,
+  ExperimentOutlined,
+  FileTextOutlined,
+  GithubOutlined,
+  QuestionCircleOutlined,
+  ReloadOutlined,
+  StarOutlined,
   SyncOutlined,
+  ThunderboltOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 import {
-  fetchChangelog,
-  groupChangelogByDate,
   cacheChangelog,
   clearChangelogCache,
+  fetchChangelog,
+  groupChangelogByDate,
   type ChangelogEntry,
 } from '../services/changelogService';
+
+const { Text } = Typography;
 
 interface ChangelogModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-// 提交类型图标和颜色配置
-const typeConfig: Record<ChangelogEntry['type'], { icon: React.ReactNode; color: string; label: string }> = {
+const typeConfig: Record<ChangelogEntry['type'], { icon: ReactNode; color: string; label: string }> = {
   feature: { icon: <StarOutlined />, color: 'green', label: '新功能' },
   update: { icon: <SyncOutlined />, color: 'geekblue', label: '更新' },
   fix: { icon: <BugOutlined />, color: 'red', label: '修复' },
@@ -48,27 +50,20 @@ export default function ChangelogModal({ visible, onClose }: ChangelogModalProps
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // 加载更新日志
-  // 每次用户打开窗口时才同步获取最新数据，不自动刷新
-  const loadChangelog = async (pageNum: number = 1, append: boolean = false) => {
+  const loadChangelog = async (pageNum = 1, append = false) => {
     setLoading(true);
     setError(null);
 
     try {
-      // 每次打开都从网络获取最新数据
       const entries = await fetchChangelog(pageNum, 30);
-
       if (entries.length === 0) {
         setHasMore(false);
+      } else if (append) {
+        setChangelog((prev) => [...prev, ...entries]);
       } else {
-        if (append) {
-          setChangelog(prev => [...prev, ...entries]);
-        } else {
-          setChangelog(entries);
-          // 缓存第一页数据（用于分页加载时的数据持久化）
-          if (pageNum === 1) {
-            cacheChangelog(entries);
-          }
+        setChangelog(entries);
+        if (pageNum === 1) {
+          cacheChangelog(entries);
         }
       }
     } catch (err) {
@@ -78,35 +73,29 @@ export default function ChangelogModal({ visible, onClose }: ChangelogModalProps
     }
   };
 
-  // 初始加载
   useEffect(() => {
-    if (visible) {
-      loadChangelog(1, false);
-      setPage(1);
-      setHasMore(true);
-    }
+    if (!visible) return;
+    void loadChangelog(1, false);
+    setPage(1);
+    setHasMore(true);
   }, [visible]);
 
-  // 加载更多
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    loadChangelog(nextPage, true);
+    void loadChangelog(nextPage, true);
   };
 
-  // 刷新（清除缓存并重新加载）
   const handleRefresh = () => {
     clearChangelogCache();
     setPage(1);
     setHasMore(true);
-    loadChangelog(1, false);
+    void loadChangelog(1, false);
   };
 
-  // 按日期分组
-  const groupedChangelog = groupChangelogByDate(changelog);
-  const sortedDates = Array.from(groupedChangelog.keys()).sort((a, b) => b.localeCompare(a));
+  const groupedChangelog = useMemo(() => groupChangelogByDate(changelog), [changelog]);
+  const sortedDates = useMemo(() => Array.from(groupedChangelog.keys()).sort((a, b) => b.localeCompare(a)), [groupedChangelog]);
 
-  // 格式化日期
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -115,14 +104,11 @@ export default function ChangelogModal({ visible, onClose }: ChangelogModalProps
     if (diffDays === 0) return '今天';
     if (diffDays === 1) return '昨天';
     if (diffDays < 7) return `${diffDays} 天前`;
-
     return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  // 格式化时间
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-  };
+  const formatTime = (dateStr: string) =>
+    new Date(dateStr).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
   return (
     <Modal
@@ -130,14 +116,7 @@ export default function ChangelogModal({ visible, onClose }: ChangelogModalProps
         <Space>
           <GithubOutlined />
           <span>更新日志</span>
-          <Button
-            type="text"
-            size="small"
-            icon={<ReloadOutlined />}
-            onClick={handleRefresh}
-            loading={loading}
-            title="刷新"
-          />
+          <Button type="text" size="small" icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading} title="刷新" />
         </Space>
       }
       open={visible}
@@ -145,110 +124,101 @@ export default function ChangelogModal({ visible, onClose }: ChangelogModalProps
       footer={null}
       width={800}
       centered
-      styles={{
-        body: {
-          maxHeight: '70vh',
-          overflowY: 'auto',
-          padding: '24px',
-        },
-      }}
+      styles={{ body: { maxHeight: '70vh', overflowY: 'auto', padding: 'var(--space-lg)' } }}
     >
-      {error && (
-        <div style={{
-          padding: '16px',
-          marginBottom: '16px',
-          background: 'var(--color-error-bg)',
-          border: '1px solid var(--color-error-border)',
-          borderRadius: '4px',
-          color: 'var(--color-error)',
-        }}>
+      {error ? (
+        <div
+          style={{
+            padding: 'var(--space-md)',
+            marginBottom: 'var(--space-md)',
+            background: 'var(--color-error-bg)',
+            border: '1px solid var(--color-error-border)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--color-error)',
+          }}
+        >
           {error}
         </div>
-      )}
+      ) : null}
 
       {loading && changelog.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{ textAlign: 'center', padding: 'var(--space-2xl) 0' }}>
           <Spin size="large" tip="加载更新日志中..." />
         </div>
-      ) : changelog.length === 0 ? (
-        <Empty description="暂无更新日志" />
-      ) : (
-        <>
-          {sortedDates.map(date => {
-            const entries = groupedChangelog.get(date) || [];
+      ) : null}
 
+      {!loading && changelog.length === 0 ? <Empty description="暂无更新日志" /> : null}
+
+      {changelog.length > 0 ? (
+        <>
+          {sortedDates.map((date) => {
+            const entries = groupedChangelog.get(date) || [];
             return (
-              <div key={date} style={{ marginBottom: '32px' }}>
-                <div style={{
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: 'var(--color-primary)',
-                  marginBottom: '16px',
-                  paddingBottom: '8px',
-                  borderBottom: '2px solid var(--color-border-secondary)',
-                }}>
-                  <ClockCircleOutlined style={{ marginRight: '8px' }} />
+              <div key={date} style={{ marginBottom: 'var(--space-xl)' }}>
+                <div
+                  style={{
+                    fontSize: 'var(--font-size-md)',
+                    fontWeight: 600,
+                    color: 'var(--color-primary)',
+                    marginBottom: 'var(--space-md)',
+                    paddingBottom: 'var(--space-xs)',
+                    borderBottom: '2px solid var(--color-border-secondary)',
+                  }}
+                >
+                  <ClockCircleOutlined style={{ marginRight: 'var(--space-xs)' }} />
                   {formatDate(date)}
                 </div>
 
                 <Timeline>
-                  {entries.map(entry => {
+                  {entries.map((entry) => {
                     const config = typeConfig[entry.type] || typeConfig.other;
-
                     return (
                       <Timeline.Item
                         key={entry.id}
                         dot={
-                          <div style={{
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '50%',
-                            background: 'var(--color-bg-container)',
-                            border: `2px solid ${config.color === 'default' ? 'var(--color-border)' : config.color}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '12px',
-                          }}>
+                          <div
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              background: 'var(--color-bg-container)',
+                              border: `2px solid ${config.color === 'default' ? 'var(--color-border)' : config.color}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
                             {config.icon}
                           </div>
                         }
                       >
-                        <div style={{ marginLeft: '8px' }}>
+                        <div style={{ marginLeft: 'var(--space-xs)' }}>
                           <Space size="small" wrap>
                             <Tag color={config.color} icon={config.icon}>
                               {config.label}
                             </Tag>
-                            {entry.scope && (
-                              <Tag color="blue">{entry.scope}</Tag>
-                            )}
-                            <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>
+                            {entry.scope ? <Tag color="blue">{entry.scope}</Tag> : null}
+                            <Text style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-xs)' }}>
                               {formatTime(entry.date)}
-                            </span>
+                            </Text>
                           </Space>
 
-                          <div style={{
-                            marginTop: '8px',
-                            fontSize: '14px',
-                            lineHeight: '1.6',
-                            color: 'var(--color-text-primary)',
-                          }}>
+                          <div
+                            style={{
+                              marginTop: 'var(--space-xs)',
+                              lineHeight: 1.6,
+                              color: 'var(--color-text-primary)',
+                            }}
+                          >
                             {entry.message}
                           </div>
 
-                          <Space size="small" style={{ marginTop: '8px' }}>
-                            {entry.author.avatar && (
-                              <Avatar size="small" src={entry.author.avatar} />
-                            )}
-                            <span style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>
+                          <Space size="small" style={{ marginTop: 'var(--space-xs)' }}>
+                            {entry.author.avatar ? <Avatar size="small" src={entry.author.avatar} /> : null}
+                            <Text style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                               {entry.author.username || entry.author.name}
-                            </span>
-                            <a
-                              href={entry.commitUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ fontSize: '12px' }}
-                            >
+                            </Text>
+                            <a href={entry.commitUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--font-size-xs)' }}>
                               查看提交
                             </a>
                           </Space>
@@ -261,46 +231,33 @@ export default function ChangelogModal({ visible, onClose }: ChangelogModalProps
             );
           })}
 
-          {
-            hasMore && (
-              <div style={{ textAlign: 'center', marginTop: '24px' }}>
-                <Button
-                  type="default"
-                  onClick={handleLoadMore}
-                  loading={loading}
-                >
-                  加载更多
-                </Button>
-              </div>
-            )
-          }
-
-          {
-            !hasMore && changelog.length > 0 && (
-              <div style={{
-                textAlign: 'center',
-                color: 'var(--color-text-tertiary)',
-                padding: '16px 0',
-                fontSize: '14px',
-              }}>
-                已显示所有更新日志
-              </div>
-            )
-          }
+          {hasMore ? (
+            <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)' }}>
+              <Button onClick={handleLoadMore} loading={loading}>
+                加载更多
+              </Button>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', color: 'var(--color-text-tertiary)', padding: 'var(--space-md) 0' }}>
+              已显示全部更新日志
+            </div>
+          )}
         </>
-      )}
+      ) : null}
 
-      <div style={{
-        marginTop: '24px',
-        padding: '12px',
-        background: 'var(--color-info-bg)',
-        borderRadius: '4px',
-        border: '1px solid var(--color-info-border)',
-        fontSize: '13px',
-        color: 'var(--color-primary)',
-      }}>
-        💡 提示：每次打开窗口时自动获取最新更新日志，数据来源于 GitHub 提交历史
+      <div
+        style={{
+          marginTop: 'var(--space-lg)',
+          padding: 'var(--space-sm)',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--color-info-border)',
+          background: 'var(--color-info-bg)',
+          color: 'var(--color-primary)',
+          fontSize: 'var(--font-size-sm)',
+        }}
+      >
+        提示：日志数据来自 GitHub 提交记录，打开窗口时会拉取最新内容。
       </div>
-    </Modal >
+    </Modal>
   );
 }

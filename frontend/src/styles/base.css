@@ -1,0 +1,62 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  font-family: var(--font-family-sans);
+  line-height: 1.57;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-text-base);
+  background: var(--color-bg-base);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-layout);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  transition: background var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-bg-layout);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --app-header-height: 56px;
+  }
+
+  button,
+  a,
+  [role='button'] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
