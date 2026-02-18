@@ -11,10 +11,57 @@ logger = get_logger(__name__)
 class OpenAIClient(BaseAIClient):
     """OpenAI API 客户端"""
 
+    def __init__(self, api_key: str, base_url: str, config=None):
+        super().__init__(api_key, base_url, config)
+        cache_cfg = self.config.cache
+        # OpenAI 兼容协议的 system prompt 缓存（用于 NEW-API 等中转站）
+        self.enable_openai_prompt_cache = cache_cfg.enable_openai_prompt_cache
+        self._openai_cache_min_length = cache_cfg.prompt_cache_min_length
+        if self.enable_openai_prompt_cache:
+            logger.info(f"🗂️ OpenAI 兼容协议 system prompt 缓存已启用 (min_length={self._openai_cache_min_length})")
+
     def _build_headers(self) -> Dict[str, str]:
-        return {
+        headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
+        }
+        if self.enable_openai_prompt_cache:
+            # Required by Anthropic prompt caching; ignored by pure OpenAI endpoints.
+            headers["anthropic-beta"] = "prompt-caching-2024-07-31"
+        return headers
+
+    @staticmethod
+    def _extract_cache_stats(usage: Any) -> Optional[Dict[str, int]]:
+        """Extract cache-related token stats from OpenAI-compatible usage payload."""
+        if not isinstance(usage, dict):
+            return None
+
+        prompt_details = usage.get("prompt_tokens_details")
+        if not isinstance(prompt_details, dict):
+            prompt_details = {}
+
+        has_cache_keys = (
+            "cache_read_input_tokens" in usage
+            or "cache_creation_input_tokens" in usage
+            or "cached_tokens" in prompt_details
+        )
+        if not has_cache_keys:
+            return None
+
+        def to_int(value: Any) -> int:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return 0
+
+        cached_tokens = to_int(prompt_details.get("cached_tokens"))
+        cache_read_tokens = to_int(usage.get("cache_read_input_tokens")) or cached_tokens
+        cache_write_tokens = to_int(usage.get("cache_creation_input_tokens"))
+
+        return {
+            "cache_read_tokens": cache_read_tokens,
+            "cache_write_tokens": cache_write_tokens,
+            "cached_tokens": cached_tokens,
         }
 
     def _build_payload(
@@ -74,10 +121,21 @@ class OpenAIClient(BaseAIClient):
 
         choice = choices[0]
         message = choice.get("message", {})
+        usage = data.get("usage")
+        cache = self._extract_cache_stats(usage)
+        if cache is not None:
+            logger.info(
+                "OpenAI-compatible cache stats: read=%s write=%s cached_tokens=%s",
+                cache["cache_read_tokens"],
+                cache["cache_write_tokens"],
+                cache["cached_tokens"],
+            )
         return {
             "content": message.get("content", ""),
             "tool_calls": message.get("tool_calls"),
             "finish_reason": choice.get("finish_reason"),
+            "usage": usage,
+            "cache": cache,
         }
 
     async def chat_completion_stream(
@@ -117,6 +175,15 @@ class OpenAIClient(BaseAIClient):
                                 break
                             try:
                                 data = json.loads(data_str)
+                                usage = data.get("usage")
+                                cache = self._extract_cache_stats(usage)
+                                if cache is not None:
+                                    logger.info(
+                                        "OpenAI-compatible stream cache stats: read=%s write=%s cached_tokens=%s",
+                                        cache["cache_read_tokens"],
+                                        cache["cache_write_tokens"],
+                                        cache["cached_tokens"],
+                                    )
                                 choices = data.get("choices", [])
                                 if choices and len(choices) > 0:
                                     delta = choices[0].get("delta", {})

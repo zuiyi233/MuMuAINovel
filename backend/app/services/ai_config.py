@@ -33,11 +33,28 @@ class RateLimitConfig:
 
 
 @dataclass
+class CacheConfig:
+    """API 缓存配置"""
+    # Anthropic 原生协议 Prompt Caching（api_provider=anthropic）
+    # 对 system prompt 加 cache_control + 发送 anthropic-beta header
+    enable_prompt_cache: bool = True
+    # 触发缓存的最小 system prompt 字符数（过短的提示词缓存收益极低）
+    prompt_cache_min_length: int = 1024
+
+    # OpenAI 兼容协议的 system prompt 缓存（api_provider=openai）
+    # 适用于 NEW-API、OpenRouter 等支持透传 cache_control 的中转站
+    # 启用后将 system 消息内容改为数组格式并附带 cache_control
+    # ⚠️ 注意：仅在中转站后端为 Anthropic 模型时有效；纯 OpenAI 模型无需开启
+    enable_openai_prompt_cache: bool = False
+
+
+@dataclass
 class AIClientConfig:
     """AI 客户端完整配置"""
     http: HTTPClientConfig = field(default_factory=HTTPClientConfig)
     retry: RetryConfig = field(default_factory=RetryConfig)
     rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
+    cache: CacheConfig = field(default_factory=CacheConfig)
 
 
 # 全局默认配置

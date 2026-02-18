@@ -9,7 +9,7 @@ from typing import Optional, AsyncGenerator, List, Dict, Any, Union
 
 from app.config import settings as app_settings
 from app.logger import get_logger
-from app.services.ai_config import AIClientConfig, default_config
+from app.services.ai_config import AIClientConfig, CacheConfig, default_config
 from app.services.ai_clients.openai_client import OpenAIClient
 from app.services.ai_clients.anthropic_client import AnthropicClient
 from app.services.ai_clients.gemini_client import GeminiClient
@@ -84,7 +84,17 @@ class AIService:
         self.default_temperature = default_temperature or app_settings.default_temperature
         self.default_max_tokens = default_max_tokens or app_settings.default_max_tokens
         self.default_system_prompt = default_system_prompt
-        self.config = config or default_config
+        # 若未显式传入 config，从 app_settings 构建（包含缓存策略）
+        if config is None:
+            self.config = AIClientConfig(
+                cache=CacheConfig(
+                    enable_prompt_cache=app_settings.enable_prompt_cache,
+                    prompt_cache_min_length=app_settings.prompt_cache_min_length,
+                    enable_openai_prompt_cache=app_settings.enable_openai_prompt_cache,
+                )
+            )
+        else:
+            self.config = config
         
         # MCP配置
         self.user_id = user_id
@@ -390,7 +400,15 @@ class AIService:
         finally:
             from app.mcp.policy import allowed_tools_var
             allowed_tools_var.reset(token)
-        
+
+        cache = response.get("cache")
+        if isinstance(cache, dict):
+            logger.info(
+                "Prompt cache result: read=%s write=%s",
+                cache.get("cache_read_tokens", 0),
+                cache.get("cache_write_tokens", 0),
+            )
+
         # 处理工具调用
         if handle_tool_calls and response.get("tool_calls"):
             return await self._handle_tool_calls(
@@ -454,7 +472,7 @@ class AIService:
         from app.mcp.policy import set_allowed_tools, allowed_tools_var
         token = set_allowed_tools(self._allowed_tools)
         try:
-            stream = await prov.generate_stream(
+            async for chunk in prov.generate_stream(
                 prompt=prompt,
                 model=model or self.default_model,
                 temperature=temperature or self.default_temperature,
@@ -463,8 +481,7 @@ class AIService:
                 tools=self._filter_tools(tools_to_use),
                 tool_choice=tool_choice,
                 user_id=self.user_id,
-            )
-            async for chunk in stream:
+            ):
                 yield chunk
         finally:
             allowed_tools_var.reset(token)

@@ -91,6 +91,18 @@ class Settings(BaseSettings):
     
     # MCP配置
     mcp_max_rounds: int = 3  # MCP工具调用最大轮数（全局统一控制）
+
+    # API 缓存配置
+    # Anthropic 原生协议 Prompt Caching（api_provider=anthropic）
+    # 支持官方 Anthropic API 及兼容其缓存协议的第三方中转站（默认启用以节省 token 成本）
+    # 若中转站不支持该特性导致报错，可设置 ENABLE_PROMPT_CACHE=false 关闭
+    enable_prompt_cache: bool = True
+    # 触发缓存的 system prompt 最小字符数（默认 1024 字符，过短不值得缓存）
+    prompt_cache_min_length: int = 1024
+    # OpenAI 兼容协议的 system prompt 缓存（api_provider=openai）
+    # 适用于 NEW-API、OpenRouter 等支持透传 cache_control 的中转站
+    # ⚠️ 仅在中转站后端对接 Anthropic 模型时有效，纯 OpenAI 接口请保持 false
+    enable_openai_prompt_cache: bool = False
     
     # LinuxDO OAuth2 配置
     LINUXDO_CLIENT_ID: Optional[str] = None

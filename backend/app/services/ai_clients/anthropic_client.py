@@ -8,16 +8,66 @@ from app.services.ai_config import AIClientConfig, default_config
 
 logger = get_logger(__name__)
 
-
 class AnthropicClient:
     """Anthropic API 客户端"""
 
     def __init__(self, api_key: str, base_url: Optional[str] = None, config: Optional[AIClientConfig] = None):
         self.config = config or default_config
-        kwargs = {"api_key": api_key}
+        cache_cfg = self.config.cache
+        self.enable_prompt_cache = cache_cfg.enable_prompt_cache
+        self._cache_min_length = cache_cfg.prompt_cache_min_length
+
+        kwargs: Dict[str, Any] = {"api_key": api_key}
         if base_url:
             kwargs["base_url"] = base_url
+        # 启用 prompt caching 时追加 beta header（官方及兼容的第三方中转站均支持）
+        if self.enable_prompt_cache:
+            kwargs["default_headers"] = {"anthropic-beta": "prompt-caching-2024-07-31"}
+            logger.info(f"🗂️ Anthropic Prompt Caching 已启用 (min_length={self._cache_min_length})")
         self.client = AsyncAnthropic(**kwargs)
+
+    def _wrap_system_with_cache(self, system_prompt: str) -> Any:
+        """将 system_prompt 包装为支持缓存的格式（仅当内容足够长时）"""
+        if self.enable_prompt_cache and len(system_prompt) >= self._cache_min_length:
+            logger.debug(f"🗂️ system_prompt 长度={len(system_prompt)}，启用 cache_control")
+            return [{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]
+        return system_prompt
+
+    @staticmethod
+    def _extract_usage_dict(usage_obj: Any) -> Dict[str, int]:
+        if usage_obj is None:
+            return {}
+
+        usage: Dict[str, int] = {}
+        for key in (
+            "input_tokens",
+            "output_tokens",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+        ):
+            value = getattr(usage_obj, key, None)
+            if value is None:
+                continue
+            try:
+                usage[key] = int(value)
+            except (TypeError, ValueError):
+                continue
+        return usage
+
+    @staticmethod
+    def _extract_cache_stats(usage: Dict[str, int]) -> Optional[Dict[str, int]]:
+        if not isinstance(usage, dict):
+            return None
+        has_cache_keys = (
+            "cache_creation_input_tokens" in usage or "cache_read_input_tokens" in usage
+        )
+        if not has_cache_keys:
+            return None
+
+        return {
+            "cache_read_tokens": usage.get("cache_read_input_tokens", 0),
+            "cache_write_tokens": usage.get("cache_creation_input_tokens", 0),
+        }
 
     async def chat_completion(
         self,
@@ -29,14 +79,14 @@ class AnthropicClient:
         tools: Optional[list] = None,
         tool_choice: Optional[str] = None,
     ) -> Dict[str, Any]:
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "messages": messages,
         }
         if system_prompt:
-            kwargs["system"] = system_prompt
+            kwargs["system"] = self._wrap_system_with_cache(system_prompt)
         if tools:
             kwargs["tools"] = tools
             if tool_choice == "required":
@@ -58,10 +108,21 @@ class AnthropicClient:
             elif block.type == "text":
                 content += block.text
 
+        usage = self._extract_usage_dict(getattr(response, "usage", None))
+        cache = self._extract_cache_stats(usage)
+        if cache is not None:
+            logger.info(
+                "Anthropic cache stats: read=%s write=%s",
+                cache["cache_read_tokens"],
+                cache["cache_write_tokens"],
+            )
+
         return {
             "content": content,
             "tool_calls": tool_calls if tool_calls else None,
             "finish_reason": response.stop_reason,
+            "usage": usage if usage else None,
+            "cache": cache,
         }
 
     async def chat_completion_stream(
@@ -83,14 +144,14 @@ class AnthropicClient:
             - tool_calls: list - 工具调用列表（如果有）
             - done: bool - 是否结束
         """
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "messages": messages,
         }
         if system_prompt:
-            kwargs["system"] = system_prompt
+            kwargs["system"] = self._wrap_system_with_cache(system_prompt)
         if tools:
             kwargs["tools"] = tools
             if tool_choice == "required":

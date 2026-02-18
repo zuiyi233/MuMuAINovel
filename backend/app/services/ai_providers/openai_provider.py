@@ -14,6 +14,26 @@ class OpenAIProvider(BaseAIProvider):
     def __init__(self, client: OpenAIClient):
         self.client = client
 
+    def _build_system_message(self, system_prompt: str) -> Dict:
+        """
+        构建 system 消息。
+        
+        当 client 启用了 openai_prompt_cache 时，将 system_prompt 包装为
+        带有 cache_control 的内容数组格式（兼容 NEW-API / OpenRouter 等
+        支持透传 Anthropic cache_control 的第三方中转站）。
+        """
+        if getattr(self.client, 'enable_openai_prompt_cache', False):
+            min_len = getattr(self.client, '_openai_cache_min_length', 1024)
+            if len(system_prompt) >= min_len:
+                logger.debug(f"🗂️ OpenAI system_prompt 长度={len(system_prompt)}，启用 cache_control（中转站模式）")
+                return {
+                    "role": "system",
+                    "content": [
+                        {"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}
+                    ]
+                }
+        return {"role": "system", "content": system_prompt}
+
     async def generate(
         self,
         prompt: str,
@@ -26,7 +46,7 @@ class OpenAIProvider(BaseAIProvider):
     ) -> Dict[str, Any]:
         messages = []
         if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
+            messages.append(self._build_system_message(system_prompt))
         messages.append({"role": "user", "content": prompt})
 
         return await self.client.chat_completion(
@@ -51,7 +71,7 @@ class OpenAIProvider(BaseAIProvider):
     ) -> AsyncGenerator[str, None]:
         messages = []
         if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
+            messages.append(self._build_system_message(system_prompt))
         messages.append({"role": "user", "content": prompt})
 
         # 如果有工具，使用真正的流式工具调用
