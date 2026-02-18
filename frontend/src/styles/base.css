@@ -7,6 +7,7 @@ body,
 html {
   font-family: var(--font-family-sans);
   line-height: 1.57;
+  letter-spacing: 0.004em;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -16,7 +17,41 @@ html {
 body {
   margin: 0;
   color: var(--color-text-base);
-  background: var(--color-bg-base);
+  background:
+    radial-gradient(1400px circle at -8% -24%, rgba(86, 139, 255, 0.34), transparent 48%),
+    radial-gradient(1100px circle at 106% 4%, rgba(90, 200, 250, 0.22), transparent 52%),
+    linear-gradient(180deg, #f3f7ff 0%, var(--color-bg-base) 46%, #dce4f0 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+html[data-theme='dark'] body {
+  background:
+    radial-gradient(1200px circle at -6% -16%, rgba(10, 132, 255, 0.26), transparent 52%),
+    radial-gradient(900px circle at 108% 6%, rgba(100, 210, 255, 0.14), transparent 58%),
+    linear-gradient(180deg, #171c24 0%, #11161d 45%, #0d1218 100%);
+}
+
+html[data-theme='ink'] body {
+  background:
+    radial-gradient(1200px circle at -6% -20%, rgba(92, 107, 192, 0.3), transparent 52%),
+    radial-gradient(950px circle at 108% 8%, rgba(122, 162, 255, 0.2), transparent 58%),
+    linear-gradient(180deg, #f4f5fb 0%, #e8eaf2 45%, #d8dce9 100%);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23grain)'/%3E%3C/svg%3E");
+}
+
+#root {
+  position: relative;
+  z-index: 1;
 }
 
 * {
@@ -29,23 +64,23 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-layout);
+  background: rgba(127, 134, 153, 0.14);
   border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: rgba(93, 103, 128, 0.38);
   border-radius: var(--radius-pill);
   transition: background var(--motion-duration-base) var(--motion-easing-standard);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
+  background: rgba(69, 79, 103, 0.58);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border) var(--color-bg-layout);
+  scrollbar-color: rgba(93, 103, 128, 0.42) rgba(127, 134, 153, 0.14);
 }
 
 @media (max-width: 768px) {

@@ -13,13 +13,11 @@ export function PageHeader({ title, subtitle, actions, metrics, compact = false 
 
   return (
     <header
+      className="macos-page-header"
       style={{
         marginBottom: 'var(--space-md)',
         padding: spacing,
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-light)',
-        background: 'var(--color-bg-container)',
-        boxShadow: 'var(--shadow-card)',
+        borderRadius: 'calc(var(--radius-lg) + 2px)',
       }}
     >
       <div className="u-flex-between" style={{ gap: 'var(--space-md)' }}>
@@ -30,6 +28,7 @@ export function PageHeader({ title, subtitle, actions, metrics, compact = false 
               color: 'var(--color-text-primary)',
               fontSize: 'var(--font-size-xl)',
               lineHeight: 1.25,
+              letterSpacing: '-0.015em',
             }}
           >
             {title}

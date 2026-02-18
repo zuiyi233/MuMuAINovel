@@ -49,9 +49,10 @@ export function AppSiderMenu({
         open={mobileOpen}
         onClose={() => onMobileOpenChange(false)}
         placement="left"
+        rootClassName="app-shell__mobile-drawer"
         width={Math.min(width, 280)}
         styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column' } }}
-        title={brand}
+        title={brand ? <div className="app-shell__mobile-brand">{brand}</div> : null}
       >
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <MenuBody
@@ -63,7 +64,7 @@ export function AppSiderMenu({
             }}
           />
         </div>
-        {footer ? <div style={{ padding: 'var(--space-sm)', borderTop: '1px solid var(--color-border-light)' }}>{footer}</div> : null}
+        {footer ? <div style={{ padding: 'var(--space-sm)', borderTop: '0.5px solid var(--color-border-light)' }}>{footer}</div> : null}
       </Drawer>
     );
   }
@@ -75,14 +76,14 @@ export function AppSiderMenu({
       collapsedWidth={collapsedWidth}
       collapsed={collapsed}
       trigger={null}
-      style={{ borderRight: '1px solid var(--color-border-light)' }}
+      style={{ borderRight: '0.5px solid var(--color-border-light)' }}
     >
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        {brand ? <div style={{ padding: 'var(--space-sm) var(--space-md)' }}>{brand}</div> : null}
+        {brand ? <div style={{ padding: 'var(--space-sm) var(--space-md)' }} className="app-shell__mobile-brand">{brand}</div> : null}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <MenuBody menuItems={menuItems} selectedKeys={selectedKeys} onSelect={onSelect} />
         </div>
-        {footer ? <div style={{ padding: 'var(--space-sm)', borderTop: '1px solid var(--color-border-light)' }}>{footer}</div> : null}
+        {footer ? <div style={{ padding: 'var(--space-sm)', borderTop: '0.5px solid var(--color-border-light)' }}>{footer}</div> : null}
       </div>
     </Sider>
   );

@@ -192,22 +192,18 @@ export default function ProjectDetail() {
         leftHeaderActions={
           <Button
             type="text"
+            className="app-shell__header-button"
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate('/')}
-            style={{ color: 'var(--color-bg-container)' }}
           >
             返回主页
           </Button>
         }
         rightHeaderActions={
           <Button
+            className="app-shell__header-button"
             icon={<SettingOutlined />}
             onClick={openSkillModal}
-            style={{
-              color: 'var(--color-bg-container)',
-              borderColor: 'var(--color-bg-container)',
-              background: 'transparent',
-            }}
           >
             项目技能
           </Button>

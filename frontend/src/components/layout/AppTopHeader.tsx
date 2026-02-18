@@ -12,6 +12,12 @@ export interface AppTopHeaderProps {
   mobile?: boolean;
 }
 
+const TRAFFIC_LIGHTS = [
+  { key: 'close', className: 'app-shell__traffic-light--close', symbol: 'x' },
+  { key: 'minimize', className: 'app-shell__traffic-light--minimize', symbol: '-' },
+  { key: 'zoom', className: 'app-shell__traffic-light--zoom', symbol: '+' },
+] as const;
+
 export function AppTopHeader({
   title,
   subtitle,
@@ -23,40 +29,41 @@ export function AppTopHeader({
 }: AppTopHeaderProps) {
   return (
     <header className="app-shell__header">
-      <div
-        style={{
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 'var(--space-sm)',
-          paddingInline: mobile ? 'var(--space-sm)' : 'var(--space-lg)',
-          color: 'var(--color-bg-container)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', minWidth: 0 }}>
+      <div className="app-shell__header-inner">
+        <div className="app-shell__header-title-group">
+          {!mobile ? (
+            <div className="app-shell__window-controls" aria-hidden>
+              {TRAFFIC_LIGHTS.map((light) => (
+                <span
+                  key={light.key}
+                  className={`app-shell__traffic-light ${light.className}`}
+                  data-symbol={light.symbol}
+                />
+              ))}
+            </div>
+          ) : null}
           {mobile ? (
             <Button
               type="text"
               icon={<MenuUnfoldOutlined />}
+              className="app-shell__header-button"
               onClick={onOpenMobileMenu}
-              style={{ color: 'var(--color-bg-container)' }}
             />
           ) : null}
           {leftActions}
-          <div style={{ minWidth: 0 }}>
-            <div className="u-truncate" style={{ fontSize: mobile ? 'var(--font-size-md)' : 'var(--font-size-xl)', fontWeight: 600 }}>
+          <div className="app-shell__titles">
+            <h1 className="u-truncate app-shell__title">
               {title}
-            </div>
+            </h1>
             {subtitle ? (
-              <div className="u-truncate" style={{ opacity: 0.9, fontSize: 'var(--font-size-sm)' }}>
+              <div className="u-truncate app-shell__subtitle">
                 {subtitle}
               </div>
             ) : null}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+        <div className="app-shell__header-right">
           {!mobile ? metrics : null}
           {rightActions}
         </div>

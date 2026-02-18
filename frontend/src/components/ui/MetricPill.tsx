@@ -12,10 +12,10 @@ export function MetricPill({ label, value, tone = 'neutral' }: MetricPillProps) 
 
   return (
     <div
+      className="macos-metric-pill"
       style={{
         padding: 'var(--space-xs) var(--space-sm)',
         borderRadius: 'var(--radius-pill)',
-        border: '1px solid var(--color-border-light)',
         background: bg,
         display: 'inline-flex',
         alignItems: 'baseline',

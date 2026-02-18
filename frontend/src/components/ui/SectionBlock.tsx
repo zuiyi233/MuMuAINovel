@@ -10,19 +10,26 @@ export interface SectionBlockProps {
 export function SectionBlock({ title, description, actions, children }: SectionBlockProps) {
   return (
     <section
+      className="macos-section-block"
       style={{
-        border: '1px solid var(--color-border-light)',
-        borderRadius: 'var(--radius-lg)',
-        background: 'var(--color-bg-container)',
-        boxShadow: 'var(--shadow-card)',
+        borderRadius: 'calc(var(--radius-lg) + 2px)',
       }}
     >
       {(title || actions || description) && (
-        <div style={{ padding: 'var(--space-md)', borderBottom: '1px solid var(--color-border-light)' }}>
+        <div style={{ padding: 'var(--space-md)', borderBottom: '0.5px solid var(--color-border-light)' }}>
           <div className="u-flex-between" style={{ gap: 'var(--space-sm)' }}>
             <div>
               {title ? (
-                <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: 'var(--font-size-lg)' }}>{title}</h2>
+                <h2
+                  style={{
+                    margin: 0,
+                    color: 'var(--color-text-primary)',
+                    fontSize: 'var(--font-size-lg)',
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  {title}
+                </h2>
               ) : null}
               {description ? (
                 <p style={{ margin: 'var(--space-xs) 0 0', color: 'var(--color-text-secondary)' }}>{description}</p>

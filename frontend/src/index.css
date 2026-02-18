@@ -1,4 +1,4 @@
-﻿#root {
+#root {
   width: 100%;
   margin: 0;
   padding: 0;
@@ -22,33 +22,39 @@ body {
 }
 
 .modern-sider {
-  background: linear-gradient(180deg, var(--color-bg-container) 0%, var(--color-bg-base) 100%) !important;
-  backdrop-filter: blur(16px);
-  border-right: 1px solid var(--color-border-light);
-  box-shadow: var(--shadow-card);
+  border-right: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .modern-sider .ant-menu {
   background: transparent !important;
   border-right: none !important;
+  padding-inline: var(--space-xs);
 }
 
 .modern-sider .ant-menu-item {
-  margin: var(--space-2xs) var(--space-xs) !important;
-  border-radius: var(--radius-md) !important;
-  height: 44px !important;
-  line-height: 44px !important;
-  transition: all var(--motion-duration-fast) var(--motion-easing-standard) !important;
+  margin: 4px 0 !important;
+  border-radius: calc(var(--radius-sm) + 2px) !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  padding-inline: 10px !important;
+  transition:
+    transform var(--motion-duration-fast) var(--motion-easing-standard),
+    background var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard) !important;
 }
 
 .modern-sider .ant-menu-item:not(.ant-menu-item-selected):hover {
-  background: var(--color-info-bg) !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+  transform: translateX(1px);
 }
 
 .modern-sider .ant-menu-item-selected {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
-  border: 1px solid var(--color-border-light);
-  box-shadow: var(--shadow-primary);
+  background: linear-gradient(180deg, #0a84ff 0%, #0066d4 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 8px 18px -10px rgba(10, 132, 255, 0.64) !important;
 }
 
 .modern-sider .ant-menu-item-selected,
@@ -63,11 +69,11 @@ body {
 }
 
 .modern-sider .ant-menu-item:not(.ant-menu-item-selected) .anticon {
-  color: var(--color-primary) !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .modern-sider .ant-menu-item .anticon {
-  font-size: 18px !important;
+  font-size: 16px !important;
 }
 
 .modern-sider .ant-menu-item a {
@@ -75,9 +81,263 @@ body {
 }
 
 .modern-sider .ant-menu-item-group-title {
+  margin-top: var(--space-sm) !important;
+  margin-bottom: 4px !important;
+  padding-inline: 10px !important;
   font-size: var(--font-size-xs) !important;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--color-text-tertiary) !important;
-  margin-top: var(--space-xs) !important;
+}
+
+html[data-theme='dark'] .modern-sider .ant-menu-item:not(.ant-menu-item-selected):hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-theme='dark'] .modern-sider .ant-menu-item-selected {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 10px 20px -10px rgba(10, 132, 255, 0.56) !important;
+}
+
+.ant-btn {
+  border-radius: 10px;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  transition:
+    transform var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+    background var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.ant-btn:hover {
+  transform: translateY(-1px);
+}
+
+.ant-btn:active {
+  transform: scale(0.97);
+}
+
+.ant-btn-primary {
+  border-color: transparent;
+  background: linear-gradient(180deg, #0a84ff 0%, #0066d4 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 10px 20px -12px rgba(10, 132, 255, 0.62);
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  border-color: transparent !important;
+  background: linear-gradient(180deg, #3b9bff 0%, #0a84ff 100%) !important;
+}
+
+.ant-btn:not(.ant-btn-primary):not(.ant-btn-link):not(.ant-btn-text) {
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-picker,
+.ant-select-selector,
+.ant-mentions,
+.ant-mentions textarea {
+  border-radius: 8px !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.1) !important;
+  background: rgba(255, 255, 255, 0.84) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66) !important;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused,
+.ant-input-number-focused,
+.ant-mentions-focused {
+  border-color: rgba(10, 132, 255, 0.58) !important;
+  box-shadow:
+    0 0 0 4px rgba(10, 132, 255, 0.2),
+    inset 0 1px 2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66) !important;
+}
+
+.ant-modal .ant-modal-content,
+.ant-drawer .ant-drawer-content,
+.ant-dropdown .ant-dropdown-menu,
+.ant-popover .ant-popover-inner,
+.ant-select-dropdown,
+.ant-picker-dropdown .ant-picker-panel-container,
+.ant-tooltip .ant-tooltip-inner {
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.64),
+    0 0 1px rgba(0, 0, 0, 0.4),
+    0 24px 42px -18px rgba(0, 0, 0, 0.32);
+}
+
+.ant-dropdown .ant-dropdown-menu-item-divider,
+.ant-menu-item-divider {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+.ant-segmented {
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  background: rgba(120, 120, 128, 0.22);
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.ant-segmented .ant-segmented-thumb {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.64),
+    0 6px 14px -10px rgba(0, 0, 0, 0.4);
+}
+
+.ant-switch {
+  min-width: 26px;
+  height: 16px;
+  line-height: 16px;
+}
+
+.ant-switch .ant-switch-handle {
+  top: 1px;
+  width: 12px;
+  height: 12px;
+}
+
+.ant-switch.ant-switch-checked {
+  background: linear-gradient(180deg, #30d158 0%, #28b24a 100%);
+}
+
+.ant-table-wrapper .ant-table {
+  background: transparent;
+}
+
+.ant-table-tbody > tr:nth-child(2n) > td {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.ant-card {
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    0 0 1px rgba(0, 0, 0, 0.4),
+    0 16px 36px -20px rgba(16, 31, 52, 0.48) !important;
+}
+
+.ant-card .ant-card-head {
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  background: transparent;
+}
+
+.macos-surface-card,
+.macos-section-block,
+.macos-page-header {
+  position: relative;
+  overflow: hidden;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    0 0 1px rgba(0, 0, 0, 0.4),
+    0 16px 36px -20px rgba(16, 31, 52, 0.48);
+}
+
+.macos-surface-card::before,
+.macos-section-block::before,
+.macos-page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.04' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23grain)'/%3E%3C/svg%3E");
+}
+
+.macos-surface-card--interactive {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.macos-surface-card--interactive:hover {
+  transform: scale(1.02);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    0 0 1px rgba(0, 0, 0, 0.42),
+    0 24px 46px -22px rgba(16, 31, 52, 0.55);
+}
+
+.macos-metric-pill {
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+html[data-theme='dark'] .ant-btn,
+html[data-theme='dark'] .ant-input,
+html[data-theme='dark'] .ant-input-affix-wrapper,
+html[data-theme='dark'] .ant-input-number,
+html[data-theme='dark'] .ant-picker,
+html[data-theme='dark'] .ant-select-selector,
+html[data-theme='dark'] .ant-mentions,
+html[data-theme='dark'] .ant-mentions textarea,
+html[data-theme='dark'] .ant-modal .ant-modal-content,
+html[data-theme='dark'] .ant-drawer .ant-drawer-content,
+html[data-theme='dark'] .ant-dropdown .ant-dropdown-menu,
+html[data-theme='dark'] .ant-popover .ant-popover-inner,
+html[data-theme='dark'] .ant-select-dropdown,
+html[data-theme='dark'] .ant-picker-dropdown .ant-picker-panel-container,
+html[data-theme='dark'] .ant-tooltip .ant-tooltip-inner,
+html[data-theme='dark'] .ant-card,
+html[data-theme='dark'] .macos-surface-card,
+html[data-theme='dark'] .macos-section-block,
+html[data-theme='dark'] .macos-page-header,
+html[data-theme='dark'] .macos-metric-pill {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: rgba(28, 33, 43, 0.72) !important;
+  color: var(--color-text-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 1px rgba(0, 0, 0, 0.72),
+    0 18px 36px -22px rgba(0, 0, 0, 0.72) !important;
+}
+
+html[data-theme='dark'] .ant-card .ant-card-head {
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme='dark'] .ant-btn-primary {
+  border-color: transparent !important;
+  background: linear-gradient(180deg, #3b9bff 0%, #0070e0 100%) !important;
+}
+
+html[data-theme='dark'] .ant-table-tbody > tr:nth-child(2n) > td {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+html[data-theme='dark'] .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 @media (max-width: 768px) {

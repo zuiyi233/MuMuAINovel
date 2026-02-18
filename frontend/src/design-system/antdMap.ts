@@ -21,15 +21,18 @@ const createThemeConfig = (themeId: ThemeId): ThemeConfig => {
       colorInfo: t['color-info'],
       colorBgBase: t['color-bg-base'],
       colorBgContainer: t['color-bg-container'],
+      colorBgElevated: t['color-bg-container'],
       colorBorder: t['color-border'],
       colorTextBase: t['color-text-base'],
       colorText: t['color-text-primary'],
       colorTextSecondary: t['color-text-secondary'],
       colorTextTertiary: t['color-text-tertiary'],
-      borderRadius: 10,
+      borderRadius: 12,
       fontFamily: 'var(--font-family-sans)',
       wireframe: false,
-      controlHeight: 36,
+      controlHeight: 34,
+      boxShadowSecondary: t['shadow-card'],
+      boxShadowTertiary: t['shadow-elevated'],
     },
     components: {
       Layout: {
@@ -40,27 +43,27 @@ const createThemeConfig = (themeId: ThemeId): ThemeConfig => {
       Card: {
         colorBgContainer: t['color-bg-container'],
         boxShadowTertiary: t['shadow-card'],
-        borderRadiusLG: 12,
+        borderRadiusLG: 16,
       },
       Button: {
         borderRadius: 10,
-        controlHeight: 36,
-        controlHeightLG: 44,
+        controlHeight: 34,
+        controlHeightLG: 40,
       },
       Input: {
-        borderRadius: 10,
+        borderRadius: 8,
       },
       Modal: {
-        borderRadiusLG: 12,
+        borderRadiusLG: 18,
       },
       Drawer: {
         colorBgElevated: t['color-bg-container'],
       },
       Menu: {
-        itemBorderRadius: 10,
+        itemBorderRadius: 8,
       },
       Alert: {
-        borderRadiusLG: 10,
+        borderRadiusLG: 12,
       },
     },
   };

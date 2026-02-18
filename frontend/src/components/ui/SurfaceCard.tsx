@@ -14,13 +14,17 @@ export function SurfaceCard({
   subtitle,
   interactive = false,
   elevated = false,
+  className,
   style,
   children,
   ...rest
 }: SurfaceCardProps) {
+  const mergedClassName = ['macos-surface-card', interactive ? 'macos-surface-card--interactive' : '', className]
+    .filter(Boolean)
+    .join(' ');
+
   const surfaceStyle: CSSProperties = {
-    borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--color-border-light)',
+    borderRadius: 'calc(var(--radius-lg) + 2px)',
     boxShadow: elevated ? 'var(--shadow-elevated)' : 'var(--shadow-card)',
     transition:
       'transform var(--motion-duration-fast) var(--motion-easing-standard), box-shadow var(--motion-duration-fast) var(--motion-easing-standard)',
@@ -30,6 +34,7 @@ export function SurfaceCard({
 
   return (
     <Card
+      className={mergedClassName}
       hoverable={interactive}
       title={
         title ? (

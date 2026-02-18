@@ -1,6 +1,6 @@
 :focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.2);
 }
 
 [data-reduced-motion='true'] *,

@@ -470,25 +470,17 @@ export default function ProjectList() {
     activeView === 'projects' ? (
       <Space size="small">
         <Button
+          className="app-shell__header-button"
           icon={<UploadOutlined />}
           onClick={() => setImportModalVisible(true)}
-          style={{
-            color: 'var(--color-bg-container)',
-            borderColor: 'var(--color-bg-container)',
-            background: 'transparent',
-          }}
         >
           导入
         </Button>
         <Button
+          className="app-shell__header-button"
           icon={<DownloadOutlined />}
           onClick={handleOpenExportModal}
           disabled={exportableProjects.length === 0}
-          style={{
-            color: 'var(--color-bg-container)',
-            borderColor: 'var(--color-bg-container)',
-            background: 'transparent',
-          }}
         >
           导出
         </Button>

@@ -24,12 +24,14 @@ export function StatusBadge({ intent = 'default', icon, children }: StatusBadgeP
       color={colorMap[intent]}
       style={{
         margin: 0,
-        borderRadius: 'var(--radius-sm)',
+        borderRadius: '999px',
         paddingInline: 'var(--space-xs)',
         minHeight: '24px',
         display: 'inline-flex',
         alignItems: 'center',
         gap: 'var(--space-2xs)',
+        border: '0.5px solid rgba(0, 0, 0, 0.08)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.5)',
       }}
     >
       {children}

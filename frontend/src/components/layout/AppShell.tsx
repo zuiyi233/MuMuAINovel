@@ -97,26 +97,17 @@ export function AppShell({
           >
             <div className="app-shell__surface">{children}</div>
           </Content>
-          {footer ? <div style={{ borderTop: '1px solid var(--color-border-light)' }}>{footer}</div> : null}
+          {footer ? <div className="app-shell__footer">{footer}</div> : null}
         </Layout>
       </Layout>
       {!mobile && menuItems.length > 0 ? (
         <button
           type="button"
+          className="app-shell__collapse-toggle"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           onClick={() => setCollapsed((v) => !v)}
           style={{
-            position: 'fixed',
-            top: 'calc(var(--app-header-height) + var(--space-sm))',
             left: collapsed ? `calc(${collapsedWidth}px - 14px)` : `calc(${sidebarWidth}px - 14px)`,
-            zIndex: 1200,
-            width: '28px',
-            height: '28px',
-            borderRadius: 'var(--radius-pill)',
-            border: '1px solid var(--color-border-light)',
-            background: 'var(--color-bg-container)',
-            color: 'var(--color-text-secondary)',
-            cursor: 'pointer',
           }}
         >
           {collapsed ? '>' : '<'}

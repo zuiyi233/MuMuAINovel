@@ -1,68 +1,37 @@
 import type { ThemePlugin } from '../../types';
-import type { ThemeSemanticVars } from '../../../design-system';
+import { getThemeCssVars } from '../../../design-system';
 import manifest from './manifest.json';
 
-const semanticVars: ThemeSemanticVars = {
-  'color-primary': '#2C3E50',
-  'color-primary-hover': '#34495E',
-  'color-primary-active': '#1A252F',
-  'color-success': '#27AE60',
-  'color-success-active': '#1F8A4C',
-  'color-warning': '#F39C12',
-  'color-error': '#C0392B',
-  'color-info': '#2980B9',
-  'color-success-bg': '#F4FBF6',
-  'color-success-border': '#BFE8D0',
-  'color-warning-bg': '#FFF8EE',
-  'color-warning-border': '#F6D9A8',
-  'color-error-bg': '#FEF3F2',
-  'color-error-border': '#F6C8C3',
-  'color-info-bg': '#EFF7FC',
-  'color-info-border': '#B9D8ED',
-  'color-bg-base': '#F5F5F0',
-  'color-bg-container': '#FFFFFF',
-  'color-bg-layout': '#EBEBE5',
-  'color-bg-spotlight': '#2C3E50',
-  'color-bg-mask': 'rgba(0, 0, 0, 0.5)',
-  'color-text-base': '#1A1A1A',
-  'color-text-primary': '#1A1A1A',
-  'color-text-secondary': '#4A4A4A',
-  'color-text-tertiary': '#7A7A7A',
-  'color-text-quaternary': '#AAAAAA',
-  'color-border': '#D0D0C8',
-  'color-border-secondary': '#E0E0D8',
-  'color-border-light': '#E7E7DF',
-  'shadow-card': '0 1px 4px rgba(0, 0, 0, 0.04)',
-  'shadow-elevated': '0 4px 16px rgba(44, 62, 80, 0.08)',
-  'shadow-primary': '0 2px 12px rgba(44, 62, 80, 0.15)',
-  'shadow-header': '0 1px 4px rgba(0, 0, 0, 0.04)',
-};
+const semanticVars = getThemeCssVars('ink');
 
 const theme: ThemePlugin = {
   manifest,
 
   antdTheme: {
     token: {
-      colorPrimary: '#2C3E50',
-      colorBgBase: '#F5F5F0',
-      colorTextBase: '#1A1A1A',
-      borderRadius: 2,
+      colorPrimary: semanticVars['color-primary'],
+      colorBgBase: semanticVars['color-bg-base'],
+      colorTextBase: semanticVars['color-text-base'],
+      colorBgContainer: semanticVars['color-bg-container'],
+      colorBorder: semanticVars['color-border-light'],
+      borderRadius: 12,
       wireframe: false,
-      fontFamily: 'var(--font-family-serif)',
+      fontFamily: 'var(--font-family-sans)',
     },
     components: {
       Layout: {
-        bodyBg: '#F5F5F0',
-        headerBg: '#FFFFFF',
-        siderBg: '#FAFAF8',
+        bodyBg: semanticVars['color-bg-base'],
+        headerBg: semanticVars['color-bg-container'],
+        siderBg: semanticVars['color-bg-container'],
       },
       Card: {
-        colorBgContainer: '#FFFFFF',
-        boxShadowTertiary: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        colorBgContainer: semanticVars['color-bg-container'],
+        boxShadowTertiary: semanticVars['shadow-card'],
+        borderRadiusLG: 16,
       },
       Button: {
-        borderRadius: 2,
-        controlHeight: 36,
+        borderRadius: 10,
+        controlHeight: 34,
       },
     },
   },
@@ -70,54 +39,22 @@ const theme: ThemePlugin = {
   semanticVars,
   cssVars: semanticVars,
 
-  customCSS: `
-    /* Ink style specific overrides */
-    .modern-sider {
-      background: linear-gradient(180deg,
-        rgba(250, 250, 248, 0.98) 0%,
-        rgba(245, 245, 240, 1) 100%) !important;
-      border-right: 1px solid rgba(44, 62, 80, 0.1);
-      box-shadow: 1px 0 8px rgba(0, 0, 0, 0.03);
-    }
-
-    .modern-sider .ant-menu-item-selected {
-      background: linear-gradient(135deg,
-        #2C3E50 0%,
-        #34495E 100%) !important;
-    }
-
-    /* Ink painting style subtle texture effect */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      pointer-events: none;
-      opacity: 0.02;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    }
-  `,
+  customCSS: '',
 
   featureOverrides: {
     prompt_workshop: {
       cssVars: {
-        'color-bg-layout': '#E7E7DF',
-        'shadow-card': '0 2px 10px rgba(0, 0, 0, 0.06)',
+        'color-bg-layout': '#D8DBE8',
+        'shadow-card': semanticVars['shadow-card'],
       },
-      customCSS: `
-        html[data-theme="ink"][data-feature="prompt_workshop"] .ant-card {
-          border: 1px solid rgba(44, 62, 80, 0.12);
-        }
-      `,
+      customCSS: '',
     },
   },
 
   motion: {
     enablePageTransition: true,
-    durationMs: 420,
-    easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+    durationMs: 380,
+    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
   },
 };
 
