@@ -77,6 +77,17 @@ class Settings(BaseSettings):
     default_model: str = "gpt-4"
     default_temperature: float = 0.7
     default_max_tokens: int = 32000
+
+    # Vector embedding config
+    # local: use local sentence-transformers model
+    # remote_openai: use OpenAI-compatible /embeddings API
+    # disabled: disable vector embedding (backend still starts)
+    vector_embedding_mode: str = "local"
+    vector_embedding_model: Optional[str] = None
+    vector_embedding_api_key: Optional[str] = None
+    vector_embedding_base_url: Optional[str] = None
+    # If true, local mode will not download missing model from network
+    vector_embedding_skip_local_download: bool = False
     
     # MCP配置
     mcp_max_rounds: int = 3  # MCP工具调用最大轮数（全局统一控制）

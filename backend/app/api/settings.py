@@ -25,6 +25,7 @@ from app.config import settings as app_settings, PROJECT_ROOT
 from app.services.ai_service import AIService, create_user_ai_service, create_user_ai_service_with_mcp
 from app.services.skills_service import parse_preferences
 from app.services.skill_policy import parse_allowed_tools_csv
+from app.services.memory_service import memory_service
 
 logger = get_logger(__name__)
 
@@ -41,6 +42,34 @@ def read_env_defaults() -> Dict[str, Any]:
         "temperature": app_settings.default_temperature,
         "max_tokens": app_settings.default_max_tokens,
     }
+
+
+def apply_vector_embedding_from_preferences(settings: Settings) -> None:
+    """Apply vector embedding runtime settings from user preferences."""
+    try:
+        prefs = parse_preferences(settings.preferences)
+        vector_cfg = prefs.get("vector_embedding")
+        if not isinstance(vector_cfg, dict):
+            return
+
+        config = dict(vector_cfg)
+        if not config.get("api_key"):
+            config["api_key"] = (
+                settings.api_key
+                or app_settings.vector_embedding_api_key
+                or app_settings.openai_api_key
+                or ""
+            )
+        if not config.get("base_url"):
+            config["base_url"] = (
+                settings.api_base_url
+                or app_settings.vector_embedding_base_url
+                or app_settings.openai_base_url
+                or "https://api.openai.com/v1"
+            )
+        memory_service.apply_vector_settings(config)
+    except Exception as e:
+        logger.warning(f"Apply vector embedding settings failed: {e}")
 
 
 def require_login(request: Request):
@@ -80,6 +109,8 @@ async def get_user_ai_service(
         await db.commit()
         await db.refresh(settings)
         logger.info(f"用户 {user.user_id} 首次使用AI服务，已从.env同步设置到数据库")
+
+    apply_vector_embedding_from_preferences(settings)
     
     # 查询用户的所有MCP插件状态
     mcp_result = await db.execute(
@@ -239,6 +270,7 @@ async def get_settings(
         await db.refresh(settings)
         logger.info(f"用户 {user.user_id} 的设置已从.env同步到数据库")
     
+    apply_vector_embedding_from_preferences(settings)
     logger.info(f"用户 {user.user_id} 获取已保存的设置")
     return settings
 
@@ -303,6 +335,7 @@ async def save_settings(
         
         await db.commit()
         await db.refresh(settings)
+        apply_vector_embedding_from_preferences(settings)
         logger.info(f"用户 {user.user_id} 更新设置")
     else:
         # 创建新设置
@@ -313,6 +346,7 @@ async def save_settings(
         db.add(settings)
         await db.commit()
         await db.refresh(settings)
+        apply_vector_embedding_from_preferences(settings)
         logger.info(f"用户 {user.user_id} 创建设置")
     
     return settings
@@ -343,6 +377,7 @@ async def update_settings(
     
     await db.commit()
     await db.refresh(settings)
+    apply_vector_embedding_from_preferences(settings)
     logger.info(f"用户 {user.user_id} 更新设置")
     
     return settings

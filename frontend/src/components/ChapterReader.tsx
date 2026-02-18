@@ -14,11 +14,13 @@ import {
   ColumnHeightOutlined
 } from '@ant-design/icons';
 import type { Chapter } from '../types';
+import { useThemeStore } from '../theme-plugins/store';
 
 // 阅读器设置接口
+type ReaderTheme = 'light' | 'sepia' | 'dark';
+
 interface ReaderSettings {
   fontSize: number;       // 字体大小
-  theme: 'light' | 'sepia' | 'dark';  // 主题模式
   lineHeight: number;     // 行高
 }
 
@@ -37,22 +39,39 @@ interface NavigationInfo {
   current: { id: string; chapter_number: number; title: string };
 }
 
+const READER_THEME_TO_PLUGIN: Record<ReaderTheme, string> = {
+  light: 'default',
+  sepia: 'ink',
+  dark: 'dark',
+};
+
+const PLUGIN_THEME_TO_READER: Record<string, ReaderTheme> = {
+  default: 'light',
+  ink: 'sepia',
+  dark: 'dark',
+};
+
 // 主题样式配置
-const themeStyles = {
-  light: { 
-    bg: '#ffffff', 
+const themeStyles: Record<ReaderTheme, {
+  bg: string;
+  text: string;
+  headerBg: string;
+  border: string;
+}> = {
+  light: {
+    bg: '#ffffff',
     text: '#333333',
     headerBg: '#fafafa',
     border: '#e8e8e8'
   },
-  sepia: { 
-    bg: '#f5e6c8', 
+  sepia: {
+    bg: '#f5e6c8',
     text: '#5b4636',
     headerBg: '#e8d9b8',
     border: '#d4c5a5'
   },
-  dark: { 
-    bg: '#1a1a1a', 
+  dark: {
+    bg: '#1a1a1a',
     text: '#cccccc',
     headerBg: '#252525',
     border: '#333333'
@@ -67,14 +86,20 @@ const loadSettings = (): ReaderSettings => {
   try {
     const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved) as {
+        fontSize?: number;
+        lineHeight?: number;
+      };
+      return {
+        fontSize: typeof parsed.fontSize === 'number' ? parsed.fontSize : 18,
+        lineHeight: typeof parsed.lineHeight === 'number' ? parsed.lineHeight : 1.8,
+      };
     }
   } catch (e) {
     console.warn('加载阅读器设置失败:', e);
   }
   return {
     fontSize: 18,
-    theme: 'light',
     lineHeight: 1.8
   };
 };
@@ -94,6 +119,9 @@ export default function ChapterReader({
   onClose, 
   onChapterChange 
 }: ChapterReaderProps) {
+  const currentThemeId = useThemeStore((state) => state.currentThemeId);
+  const setCurrentTheme = useThemeStore((state) => state.setCurrentTheme);
+
   // 阅读器设置
   const [settings, setSettings] = useState<ReaderSettings>(loadSettings);
   
@@ -199,12 +227,19 @@ export default function ChapterReader({
     }
   }, [chapter?.id]);
 
+  const readerTheme: ReaderTheme = PLUGIN_THEME_TO_READER[currentThemeId] ?? 'light';
+
   // 当前主题样式
-  const currentTheme = themeStyles[settings.theme];
+  const currentTheme = themeStyles[readerTheme];
 
   // 更新设置的便捷函数
-  const updateSettings = (key: keyof ReaderSettings, value: number | string) => {
+  const updateSettings = (key: keyof ReaderSettings, value: number) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleThemeChange = (nextTheme: ReaderTheme) => {
+    const nextThemeId = READER_THEME_TO_PLUGIN[nextTheme] || 'default';
+    setCurrentTheme(nextThemeId);
   };
 
   return (
@@ -341,8 +376,8 @@ export default function ChapterReader({
               </Space>
               <div>
                 <Radio.Group
-                  value={settings.theme}
-                  onChange={e => updateSettings('theme', e.target.value)}
+                  value={readerTheme}
+                  onChange={e => handleThemeChange(e.target.value as ReaderTheme)}
                   buttonStyle="solid"
                   size={isMobile ? 'small' : 'middle'}
                 >

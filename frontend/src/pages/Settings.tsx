@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, Select, Slider, InputNumber, message, Space, Typography, Spin, Modal, Alert, Grid, Tabs, List, Tag, Popconfirm, Empty, Row, Col } from 'antd';
+import { Card, Form, Input, Button, Select, Slider, InputNumber, message, Space, Typography, Spin, Modal, Alert, Grid, Tabs, List, Tag, Popconfirm, Empty, Row, Col, Switch } from 'antd';
 import { SaveOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, ThunderboltOutlined, PlusOutlined, EditOutlined, CopyOutlined, WarningOutlined } from '@ant-design/icons';
 import { settingsApi, mcpPluginApi } from '../services/api';
 import type { SettingsUpdate, APIKeyPreset, PresetCreateRequest, APIKeyPresetConfig } from '../types';
@@ -11,6 +11,38 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 const { TextArea } = Input;
+
+type VectorEmbeddingPrefs = {
+  mode?: 'local' | 'remote_openai' | 'disabled';
+  model?: string;
+  api_key?: string;
+  base_url?: string;
+  skip_local_download?: boolean;
+};
+
+type SettingsFormValues = SettingsUpdate & {
+  vector_embedding_mode?: 'local' | 'remote_openai' | 'disabled';
+  vector_embedding_model?: string;
+  vector_embedding_api_key?: string;
+  vector_embedding_base_url?: string;
+  vector_embedding_skip_local_download?: boolean;
+};
+
+function safeParsePreferences(preferences?: string): Record<string, unknown> {
+  if (!preferences) return {};
+  try {
+    return JSON.parse(preferences) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function extractVectorPrefs(preferences?: string): VectorEmbeddingPrefs {
+  const prefs = safeParsePreferences(preferences);
+  const raw = prefs.vector_embedding;
+  if (!raw || typeof raw !== 'object') return {};
+  return raw as VectorEmbeddingPrefs;
+}
 
 export default function SettingsPage() {
   const screens = useBreakpoint();
@@ -35,6 +67,7 @@ export default function SettingsPage() {
     suggestions?: string[];
   } | null>(null);
   const [showTestResult, setShowTestResult] = useState(false);
+  const [settingsPreferences, setSettingsPreferences] = useState<Record<string, unknown>>({});
 
   // 预设相关状态
   const [activeTab, setActiveTab] = useState('current');
@@ -76,7 +109,17 @@ export default function SettingsPage() {
     setInitialLoading(true);
     try {
       const settings = await settingsApi.getSettings();
-      form.setFieldsValue(settings);
+      const vectorPrefs = extractVectorPrefs(settings.preferences);
+      setSettingsPreferences(safeParsePreferences(settings.preferences));
+
+      form.setFieldsValue({
+        ...settings,
+        vector_embedding_mode: vectorPrefs.mode || 'local',
+        vector_embedding_model: vectorPrefs.model || '',
+        vector_embedding_api_key: vectorPrefs.api_key || '',
+        vector_embedding_base_url: vectorPrefs.base_url || '',
+        vector_embedding_skip_local_download: !!vectorPrefs.skip_local_download,
+      });
 
       // 判断是否为默认设置（id='0'表示来自.env的默认配置）
       if (settings.id === '0' || !settings.id) {
@@ -92,12 +135,15 @@ export default function SettingsPage() {
       if (error?.response?.status === 404) {
         setHasSettings(false);
         setIsDefaultSettings(true);
+        setSettingsPreferences({});
         form.setFieldsValue({
           api_provider: 'openai',
           api_base_url: 'https://api.openai.com/v1',
           llm_model: 'gpt-4',
           temperature: 0.7,
           max_tokens: 2000,
+          vector_embedding_mode: 'local',
+          vector_embedding_skip_local_download: false,
         });
       } else {
         message.error('加载设置失败');
@@ -107,9 +153,34 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSave = async (values: SettingsUpdate) => {
+  const handleSave = async (values: SettingsFormValues) => {
     setLoading(true);
     try {
+      const {
+        vector_embedding_mode,
+        vector_embedding_model,
+        vector_embedding_api_key,
+        vector_embedding_base_url,
+        vector_embedding_skip_local_download,
+        ...coreValues
+      } = values;
+
+      const nextPreferences: Record<string, unknown> = {
+        ...settingsPreferences,
+        vector_embedding: {
+          mode: vector_embedding_mode || 'local',
+          model: (vector_embedding_model || '').trim() || undefined,
+          api_key: (vector_embedding_api_key || '').trim() || undefined,
+          base_url: (vector_embedding_base_url || '').trim() || undefined,
+          skip_local_download: !!vector_embedding_skip_local_download,
+        },
+      };
+
+      const payload: SettingsUpdate = {
+        ...coreValues,
+        preferences: JSON.stringify(nextPreferences),
+      };
+
       // 检查是否与 MCP 缓存的配置不一致
       const verifiedConfigStr = localStorage.getItem('mcp_verified_config');
       let configChanged = false;
@@ -118,15 +189,16 @@ export default function SettingsPage() {
         try {
           const verifiedConfig = JSON.parse(verifiedConfigStr);
           configChanged =
-            verifiedConfig.provider !== values.api_provider ||
-            verifiedConfig.baseUrl !== values.api_base_url ||
-            verifiedConfig.model !== values.llm_model;
+            verifiedConfig.provider !== payload.api_provider ||
+            verifiedConfig.baseUrl !== payload.api_base_url ||
+            verifiedConfig.model !== payload.llm_model;
         } catch (e) {
           console.error('Failed to parse verified config:', e);
         }
       }
       
-      await settingsApi.saveSettings(values);
+      await settingsApi.saveSettings(payload);
+      setSettingsPreferences(nextPreferences);
       message.success('设置已保存');
       setHasSettings(true);
       setIsDefaultSettings(false);
@@ -144,12 +216,12 @@ export default function SettingsPage() {
         if (activePreset) {
           const presetConfig = activePreset.config;
           const configMismatch =
-            presetConfig.api_provider !== values.api_provider ||
-            presetConfig.api_key !== values.api_key ||
-            presetConfig.api_base_url !== values.api_base_url ||
-            presetConfig.llm_model !== values.llm_model ||
-            presetConfig.temperature !== values.temperature ||
-            presetConfig.max_tokens !== values.max_tokens;
+            presetConfig.api_provider !== payload.api_provider ||
+            presetConfig.api_key !== payload.api_key ||
+            presetConfig.api_base_url !== payload.api_base_url ||
+            presetConfig.llm_model !== payload.llm_model ||
+            presetConfig.temperature !== payload.temperature ||
+            presetConfig.max_tokens !== payload.max_tokens;
           
           if (configMismatch) {
             // 配置已变更，清除前端的激活状态标记
@@ -242,6 +314,11 @@ export default function SettingsPage() {
           llm_model: 'gpt-4',
           temperature: 0.7,
           max_tokens: 2000,
+          vector_embedding_mode: 'local',
+          vector_embedding_model: '',
+          vector_embedding_api_key: '',
+          vector_embedding_base_url: '',
+          vector_embedding_skip_local_download: false,
         });
         message.info('已重置为默认值，请点击保存');
       },
@@ -1264,6 +1341,113 @@ export default function SettingsPage() {
                               style={{ fontSize: isMobile ? '13px' : '14px' }}
                             />
                           </Form.Item>
+
+                          <Card
+                            size="small"
+                            title="Vector Embedding"
+                            style={{ marginBottom: isMobile ? 12 : 16 }}
+                          >
+                            <Row gutter={16}>
+                              <Col xs={24} sm={12}>
+                                <Form.Item
+                                  name="vector_embedding_mode"
+                                  label="Mode"
+                                  initialValue="local"
+                                  rules={[{ required: true, message: 'Please select mode' }]}
+                                  style={{ marginBottom: 12 }}
+                                >
+                                  <Select
+                                    size={isMobile ? 'middle' : 'large'}
+                                    options={[
+                                      { value: 'local', label: 'Local (sentence-transformers)' },
+                                      { value: 'remote_openai', label: 'Remote OpenAI-compatible' },
+                                      { value: 'disabled', label: 'Disabled (no vector embedding)' },
+                                    ]}
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col xs={24} sm={12}>
+                                <Form.Item
+                                  name="vector_embedding_model"
+                                  label="Embedding Model"
+                                  style={{ marginBottom: 12 }}
+                                >
+                                  <Input
+                                    size={isMobile ? 'middle' : 'large'}
+                                    placeholder="e.g. text-embedding-3-small"
+                                  />
+                                </Form.Item>
+                              </Col>
+                            </Row>
+
+                            <Form.Item noStyle shouldUpdate={(prev, cur) => prev.vector_embedding_mode !== cur.vector_embedding_mode}>
+                              {({ getFieldValue }) => {
+                                const mode = getFieldValue('vector_embedding_mode') || 'local';
+                                if (mode === 'remote_openai') {
+                                  return (
+                                    <Row gutter={16}>
+                                      <Col xs={24} sm={12}>
+                                        <Form.Item
+                                          name="vector_embedding_api_key"
+                                          label="Embedding API Key"
+                                          style={{ marginBottom: 12 }}
+                                        >
+                                          <Input.Password
+                                            size={isMobile ? 'middle' : 'large'}
+                                            placeholder="Leave empty to fallback to API Key above"
+                                            autoComplete="new-password"
+                                          />
+                                        </Form.Item>
+                                      </Col>
+                                      <Col xs={24} sm={12}>
+                                        <Form.Item
+                                          name="vector_embedding_base_url"
+                                          label="Embedding Base URL"
+                                          style={{ marginBottom: 12 }}
+                                        >
+                                          <Input
+                                            size={isMobile ? 'middle' : 'large'}
+                                            placeholder="Leave empty to fallback to API Base URL above"
+                                          />
+                                        </Form.Item>
+                                      </Col>
+                                    </Row>
+                                  );
+                                }
+
+                                if (mode === 'local') {
+                                  return (
+                                    <>
+                                      <Form.Item
+                                        name="vector_embedding_skip_local_download"
+                                        label="Skip local model auto-download"
+                                        valuePropName="checked"
+                                        style={{ marginBottom: 8 }}
+                                      >
+                                        <Switch />
+                                      </Form.Item>
+                                      <Text type="secondary">
+                                        Enable this if you want local mode to fail fast when model files are missing.
+                                      </Text>
+                                    </>
+                                  );
+                                }
+
+                                return (
+                                  <>
+                                    <Text type="secondary">
+                                      Vector embedding is disabled. Memory vector add/search will be skipped.
+                                    </Text>
+                                  </>
+                                );
+                              }}
+                            </Form.Item>
+                            <div style={{ marginTop: 8 }}>
+                              <Text type="secondary">
+                                Saved to `preferences.vector_embedding`. Remote mode avoids local model pulling after you save.
+                              </Text>
+                            </div>
+                          </Card>
 
                           {/* 测试结果展示 */}
                           {showTestResult && testResult && (

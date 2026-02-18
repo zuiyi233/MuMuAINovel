@@ -5,6 +5,8 @@ from typing import List, Dict, Any, Optional
 import json
 from datetime import datetime
 from app.logger import get_logger
+from app.config import settings as config_settings
+from openai import AsyncOpenAI
 import os
 import hashlib
 
@@ -90,6 +92,63 @@ class MemoryService:
             
             # 初始化ChromaDB客户端(使用新API - PersistentClient)
             self.client = chromadb.PersistentClient(path=chroma_dir)
+
+            raw_mode = (config_settings.vector_embedding_mode or "local").strip().lower()
+            if raw_mode in {"remote_openai", "remote", "openai", "openai_compatible"}:
+                self.embedding_mode = "remote_openai"
+            elif raw_mode in {"disabled", "none", "off"}:
+                self.embedding_mode = "disabled"
+            else:
+                if raw_mode != "local":
+                    logger.warning(f"Unknown VECTOR_EMBEDDING_MODE={raw_mode}, fallback to local")
+                self.embedding_mode = "local"
+
+            configured_model = (config_settings.vector_embedding_model or "").strip()
+            if configured_model:
+                self.embedding_model_name = configured_model
+            elif self.embedding_mode == "remote_openai":
+                self.embedding_model_name = "text-embedding-3-small"
+            else:
+                self.embedding_model_name = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+            # Keep legacy local collection names unchanged.
+            self.collection_namespace = self._build_collection_namespace()
+            self.embedding_model = None
+            self.embedding_client = None
+            self.skip_local_download = bool(config_settings.vector_embedding_skip_local_download)
+            self.runtime_vector_embedding_api_key = (
+                (config_settings.vector_embedding_api_key or config_settings.openai_api_key or "").strip() or None
+            )
+            self.runtime_vector_embedding_base_url = (
+                config_settings.vector_embedding_base_url
+                or config_settings.openai_base_url
+                or "https://api.openai.com/v1"
+            )
+
+            self.embedding_unavailable_reason = None
+            if self.embedding_mode == "remote_openai":
+                try:
+                    self._init_remote_embedding_client()
+                except Exception as remote_err:
+                    self.embedding_unavailable_reason = str(remote_err)
+                    logger.warning(
+                        "Vector embedding remote backend is unavailable, startup continues without embedding: "
+                        f"{remote_err}"
+                    )
+            elif self.embedding_mode == "disabled":
+                self.embedding_unavailable_reason = "VECTOR_EMBEDDING_MODE=disabled"
+                logger.info("Vector embedding is disabled by configuration")
+
+            # Keep startup resilient: local model loading is lazy, remote failures don't block app startup.
+            self._initialized = True
+            logger.info("✅ MemoryService初始化成功")
+            logger.info(f"  - ChromaDB目录: {chroma_dir}")
+            logger.info(f"  - Embedding模式: {self.embedding_mode}")
+            logger.info(f"  - Embedding模型: {self.embedding_model_name}")
+            if self.embedding_unavailable_reason:
+                logger.warning(f"  - Embedding不可用原因: {self.embedding_unavailable_reason}")
+            logger.info("  - Embedding加载策略: lazy")
+            return
             
             # 初始化多语言embedding模型(支持中文)
             logger.info("🔄 正在加载Embedding模型...")
@@ -117,7 +176,10 @@ class MemoryService:
                     logger.info(f"📁 模型目录内容 ({len(items)} 项): {items}")
                     
                     # 检查是否有预期的模型文件夹
-                    expected_model_dir = os.path.join(abs_cache_dir, 'models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2')
+                    expected_model_dir = os.path.join(
+                        abs_cache_dir,
+                        f"models--{self.embedding_model_name.replace('/', '--')}"
+                    )
                     logger.info(f"🔍 检查预期路径: {expected_model_dir}")
                     
                     if os.path.exists(expected_model_dir):
@@ -141,13 +203,13 @@ class MemoryService:
                 logger.warning(f"⚠️ 模型目录不存在: {abs_cache_dir}")
             
             try:
-                logger.info("🔄 尝试加载主模型: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+                logger.info(f"🔄 尝试加载主模型: {self.embedding_model_name}")
                 
                 # 使用绝对路径检查本地模型
                 abs_cache_dir = os.path.abspath(model_cache_dir)
                 local_model_path = os.path.join(
                     abs_cache_dir,
-                    'models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2'
+                    f"models--{self.embedding_model_name.replace('/', '--')}"
                 )
                 
                 logger.info(f"🔍 检查本地模型路径: {local_model_path}")
@@ -170,7 +232,7 @@ class MemoryService:
                     logger.info(f"✅ 检测到完整本地模型，使用离线模式加载")
                     try:
                         self.embedding_model = SentenceTransformer(
-                            'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
+                            self.embedding_model_name,
                             cache_folder=abs_cache_dir,
                             device='cpu',
                             trust_remote_code=True,
@@ -182,10 +244,14 @@ class MemoryService:
                         logger.info("🔄 尝试在线模式...")
                         raise local_err
                 else:
+                    if self.skip_local_download:
+                        raise RuntimeError(
+                            "VECTOR_EMBEDDING_SKIP_LOCAL_DOWNLOAD=true and local embedding model is missing"
+                        )
                     logger.info("📥 本地模型不完整或不存在，将联网下载...")
                     logger.info(f"   下载后将保存到: {abs_cache_dir}")
                     self.embedding_model = SentenceTransformer(
-                        'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
+                        self.embedding_model_name,
                         cache_folder=abs_cache_dir,
                         device='cpu',
                         trust_remote_code=True,
@@ -215,17 +281,169 @@ class MemoryService:
                     logger.error("💡 模型首次使用需要联网下载（约420MB）")
                     logger.error("   或手动下载模型文件到 embedding 目录")
                     logger.error(f"💡 期望的模型目录结构:")
-                    logger.error(f"   {os.path.abspath(model_cache_dir)}/models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2/")
+                    logger.error(
+                        f"   {os.path.abspath(model_cache_dir)}/models--{self.embedding_model_name.replace('/', '--')}/"
+                    )
                     raise RuntimeError("无法加载任何Embedding模型")
             
             self._initialized = True
             logger.info("✅ MemoryService初始化成功")
             logger.info(f"  - ChromaDB目录: {chroma_dir}")
-            logger.info(f"  - Embedding模型: paraphrase-multilingual-MiniLM-L12-v2")
+            logger.info(f"  - Embedding模式: {self.embedding_mode}")
+            logger.info(f"  - Embedding模型: {self.embedding_model_name}")
             
         except Exception as e:
             logger.error(f"❌ MemoryService初始化失败: {str(e)}")
             raise
+
+    def _build_collection_namespace(self) -> str:
+        if self.embedding_mode in {"local", "disabled"}:
+            return ""
+        key = f"{self.embedding_mode}:{self.embedding_model_name}"
+        model_hash = hashlib.sha256(key.encode()).hexdigest()[:8]
+        return f"_e_{model_hash}"
+
+    def _init_remote_embedding_client(self) -> None:
+        api_key = (self.runtime_vector_embedding_api_key or "").strip()
+        if not api_key:
+            raise RuntimeError(
+                "Remote embedding mode requires VECTOR_EMBEDDING_API_KEY or OPENAI_API_KEY"
+            )
+
+        base_url = self.runtime_vector_embedding_base_url or "https://api.openai.com/v1"
+        self.embedding_client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+
+    def _get_collection_name(self, user_id: str, project_id: str) -> str:
+        user_hash = hashlib.sha256(user_id.encode()).hexdigest()[:8]
+        project_hash = hashlib.sha256(project_id.encode()).hexdigest()[:8]
+        base_name = f"u_{user_hash}_p_{project_hash}"
+        return f"{base_name}{self.collection_namespace}"
+
+    async def _embed_text(self, text: str) -> List[float]:
+        vectors = await self._embed_texts([text])
+        return vectors[0]
+
+    async def _embed_texts(self, texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+
+        if self.embedding_mode == "disabled":
+            raise RuntimeError("Vector embedding is disabled")
+
+        if self.embedding_mode == "remote_openai":
+            if not self.embedding_client:
+                # Retry lazy init in case runtime settings changed after startup.
+                self._init_remote_embedding_client()
+
+            response = await self.embedding_client.embeddings.create(
+                model=self.embedding_model_name,
+                input=texts if len(texts) > 1 else texts[0],
+            )
+            sorted_data = sorted(response.data, key=lambda item: item.index)
+            return [item.embedding for item in sorted_data]
+
+        if self.embedding_model is None:
+            self._load_local_embedding_model()
+        vectors = self.embedding_model.encode(texts)
+        return vectors.tolist()
+
+    def _load_local_embedding_model(self) -> None:
+        model_cache_dir = os.environ.get('SENTENCE_TRANSFORMERS_HOME', 'embedding')
+        os.makedirs(model_cache_dir, exist_ok=True)
+        abs_cache_dir = os.path.abspath(model_cache_dir)
+
+        local_model_path = os.path.join(
+            abs_cache_dir,
+            f"models--{self.embedding_model_name.replace('/', '--')}"
+        )
+        snapshots_dir = os.path.join(local_model_path, 'snapshots')
+        has_valid_model = False
+        if os.path.exists(snapshots_dir):
+            try:
+                has_valid_model = bool(os.listdir(snapshots_dir))
+            except Exception:
+                has_valid_model = False
+
+        if self.skip_local_download and not has_valid_model:
+            self.embedding_unavailable_reason = (
+                "VECTOR_EMBEDDING_SKIP_LOCAL_DOWNLOAD=true and local embedding model is missing"
+            )
+            raise RuntimeError(
+                "VECTOR_EMBEDDING_SKIP_LOCAL_DOWNLOAD=true and local embedding model is missing"
+            )
+
+        local_only = has_valid_model or self.skip_local_download
+        try:
+            self.embedding_model = SentenceTransformer(
+                self.embedding_model_name,
+                cache_folder=abs_cache_dir,
+                device='cpu',
+                trust_remote_code=True,
+                local_files_only=local_only,
+            )
+            self.embedding_unavailable_reason = None
+        except Exception as e:
+            self.embedding_unavailable_reason = str(e)
+            raise
+
+    def apply_vector_settings(self, vector_config: Optional[Dict[str, Any]]) -> None:
+        if not vector_config:
+            return
+
+        mode_raw = str(vector_config.get("mode", self.embedding_mode)).strip().lower()
+        if mode_raw in {"remote_openai", "remote", "openai", "openai_compatible"}:
+            mode = "remote_openai"
+        elif mode_raw in {"disabled", "none", "off"}:
+            mode = "disabled"
+        else:
+            mode = "local"
+
+        model_name = str(vector_config.get("model") or "").strip()
+        if not model_name:
+            model_name = (
+                "text-embedding-3-small" if mode == "remote_openai"
+                else ("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2" if mode == "local" else "disabled")
+            )
+
+        api_key = str(vector_config.get("api_key") or "").strip() or None
+        base_url = str(vector_config.get("base_url") or "").strip() or None
+        skip_local_download = bool(vector_config.get("skip_local_download", self.skip_local_download))
+
+        changed = (
+            mode != self.embedding_mode
+            or model_name != self.embedding_model_name
+            or api_key != self.runtime_vector_embedding_api_key
+            or base_url != self.runtime_vector_embedding_base_url
+            or skip_local_download != self.skip_local_download
+        )
+        if not changed:
+            return
+
+        self.embedding_mode = mode
+        self.embedding_model_name = model_name
+        self.runtime_vector_embedding_api_key = api_key
+        self.runtime_vector_embedding_base_url = base_url or self.runtime_vector_embedding_base_url
+        self.skip_local_download = skip_local_download
+        self.collection_namespace = self._build_collection_namespace()
+        self.embedding_unavailable_reason = None
+
+        # Reset backend clients/models and lazy init on next embedding call.
+        self.embedding_client = None
+        self.embedding_model = None
+        if self.embedding_mode == "remote_openai":
+            try:
+                self._init_remote_embedding_client()
+            except Exception as e:
+                self.embedding_unavailable_reason = str(e)
+                logger.warning(f"Remote embedding backend unavailable after settings update: {e}")
+        elif self.embedding_mode == "disabled":
+            self.embedding_unavailable_reason = "Vector embedding disabled by user settings"
+
+        logger.info(
+            "Applied runtime vector embedding settings: "
+            f"mode={self.embedding_mode}, model={self.embedding_model_name}, "
+            f"skip_local_download={self.skip_local_download}"
+        )
     
     def get_collection(self, user_id: str, project_id: str):
         """
@@ -249,9 +467,7 @@ class MemoryService:
         
         # 使用SHA256哈希压缩ID长度，确保不超过63字符
         # 格式: u_{user_hash}_p_{project_hash} (约30字符)
-        user_hash = hashlib.sha256(user_id.encode()).hexdigest()[:8]
-        project_hash = hashlib.sha256(project_id.encode()).hexdigest()[:8]
-        collection_name = f"u_{user_hash}_p_{project_hash}"
+        collection_name = self._get_collection_name(user_id, project_id)
         
         try:
             return self.client.get_or_create_collection(
@@ -289,11 +505,15 @@ class MemoryService:
         Returns:
             是否添加成功
         """
+        if self.embedding_mode == "disabled":
+            logger.info("Vector embedding disabled, skip add_memory")
+            return False
+
         try:
             collection = self.get_collection(user_id, project_id)
             
             # 生成文本的向量表示
-            embedding = self.embedding_model.encode(content).tolist()
+            embedding = await self._embed_text(content)
             
             # 准备元数据(ChromaDB要求所有值为基础类型)
             chroma_metadata = {
@@ -348,6 +568,9 @@ class MemoryService:
         """
         if not memories:
             return 0
+        if self.embedding_mode == "disabled":
+            logger.info("Vector embedding disabled, skip batch_add_memories")
+            return 0
             
         try:
             collection = self.get_collection(user_id, project_id)
@@ -355,16 +578,11 @@ class MemoryService:
             ids = []
             documents = []
             metadatas = []
-            embeddings = []
             
             # 批量准备数据
             for mem in memories:
                 ids.append(mem['id'])
                 documents.append(mem['content'])
-                
-                # 生成embedding
-                embedding = self.embedding_model.encode(mem['content']).tolist()
-                embeddings.append(embedding)
                 
                 # 准备元数据
                 metadata = mem.get('metadata', {})
@@ -380,6 +598,9 @@ class MemoryService:
                 }
                 metadatas.append(chroma_metadata)
             
+            # 批量生成embedding（远端模式复用一次 API 调用）
+            embeddings = await self._embed_texts(documents)
+
             # 批量添加
             collection.add(
                 ids=ids,
@@ -420,11 +641,14 @@ class MemoryService:
         Returns:
             相关记忆列表,按相似度排序
         """
+        if self.embedding_mode == "disabled":
+            return []
+
         try:
             collection = self.get_collection(user_id, project_id)
             
             # 生成查询向量
-            query_embedding = self.embedding_model.encode(query).tolist()
+            query_embedding = await self._embed_text(query)
             
             # 构建过滤条件 - ChromaDB要求使用$and组合多个条件
             where_filter = None
@@ -777,23 +1001,38 @@ class MemoryService:
             是否删除成功
         """
         try:
-            # 生成collection名称
+            # 生成collection名称（兼容历史本地集合与远端模式集合）
             user_hash = hashlib.sha256(user_id.encode()).hexdigest()[:8]
             project_hash = hashlib.sha256(project_id.encode()).hexdigest()[:8]
-            collection_name = f"u_{user_hash}_p_{project_hash}"
-            
-            # 删除整个collection(这会清理所有向量数据)
+            legacy_collection_name = f"u_{user_hash}_p_{project_hash}"
+            target_collections = {
+                legacy_collection_name,
+                self._get_collection_name(user_id, project_id),
+            }
+
+            # 尝试列出并删除所有该项目的 embedding 集合（含不同模型哈希后缀）
             try:
-                self.client.delete_collection(name=collection_name)
-                logger.info(f"🗑️ 已删除项目{project_id[:8]}的向量数据库collection: {collection_name}")
-                return True
-            except Exception as e:
-                # 如果collection不存在,也算成功
-                if "does not exist" in str(e).lower():
-                    logger.info(f"ℹ️ 项目{project_id[:8]}的collection不存在,无需删除")
-                    return True
-                else:
-                    raise
+                for item in self.client.list_collections():
+                    name = getattr(item, "name", str(item))
+                    if name == legacy_collection_name or name.startswith(f"{legacy_collection_name}_e_"):
+                        target_collections.add(name)
+            except Exception as list_err:
+                logger.warning(f"⚠️ 列出向量集合失败，继续按已知集合删除: {list_err}")
+
+            deleted_count = 0
+            for collection_name in target_collections:
+                try:
+                    self.client.delete_collection(name=collection_name)
+                    deleted_count += 1
+                    logger.info(f"🗑️ 已删除项目{project_id[:8]}的向量数据库collection: {collection_name}")
+                except Exception as e:
+                    if "does not exist" not in str(e).lower():
+                        raise
+
+            if deleted_count == 0:
+                logger.info(f"ℹ️ 项目{project_id[:8]}的collection不存在,无需删除")
+
+            return True
                 
         except Exception as e:
             logger.error(f"❌ 删除项目记忆失败: {str(e)}")
@@ -820,6 +1059,10 @@ class MemoryService:
         Returns:
             是否更新成功
         """
+        if self.embedding_mode == "disabled" and content:
+            logger.info("Vector embedding disabled, skip update_memory with content")
+            return False
+
         try:
             collection = self.get_collection(user_id, project_id)
             
@@ -827,7 +1070,7 @@ class MemoryService:
             
             if content:
                 # 重新生成embedding
-                embedding = self.embedding_model.encode(content).tolist()
+                embedding = await self._embed_text(content)
                 update_data['embeddings'] = [embedding]
                 update_data['documents'] = [content]
             
