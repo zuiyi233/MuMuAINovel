@@ -19,13 +19,17 @@ export function SurfaceCard({
   children,
   ...rest
 }: SurfaceCardProps) {
-  const mergedClassName = ['macos-surface-card', interactive ? 'macos-surface-card--interactive' : '', className]
+  const mergedClassName = [
+    'macos-surface-card',
+    interactive ? 'macos-surface-card--interactive' : '',
+    elevated ? 'macos-surface-card--elevated' : '',
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
 
+  // boxShadow 已通过 CSS 类控制，此处仅保留过渡和交互样式
   const surfaceStyle: CSSProperties = {
-    borderRadius: 'calc(var(--radius-lg) + 2px)',
-    boxShadow: elevated ? 'var(--shadow-elevated)' : 'var(--shadow-card)',
     transition:
       'transform var(--motion-duration-fast) var(--motion-easing-standard), box-shadow var(--motion-duration-fast) var(--motion-easing-standard)',
     ...(interactive && { cursor: 'pointer' }),
@@ -35,13 +39,13 @@ export function SurfaceCard({
   return (
     <Card
       className={mergedClassName}
-      hoverable={interactive}
+      hoverable={false}
       title={
         title ? (
           <div>
-            <div style={{ color: 'var(--color-text-primary)' }}>{title}</div>
+            <div style={{ color: 'var(--color-text-primary)', fontWeight: 600 }}>{title}</div>
             {subtitle ? (
-              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>{subtitle}</div>
+              <div className="macos-surface-card__subtitle">{subtitle}</div>
             ) : null}
           </div>
         ) : undefined

@@ -17,36 +17,58 @@ html {
 body {
   margin: 0;
   color: var(--color-text-base);
+  /* macOS 桌面级背景：深度光晕 + 方向渐变 */
   background:
-    radial-gradient(1400px circle at -8% -24%, rgba(86, 139, 255, 0.34), transparent 48%),
-    radial-gradient(1100px circle at 106% 4%, rgba(90, 200, 250, 0.22), transparent 52%),
-    linear-gradient(180deg, #f3f7ff 0%, var(--color-bg-base) 46%, #dce4f0 100%);
+    radial-gradient(1600px circle at -6% -20%, rgba(86, 139, 255, 0.38), transparent 46%),
+    radial-gradient(1200px circle at 108% 2%, rgba(90, 200, 250, 0.26), transparent 50%),
+    radial-gradient(800px circle at 50% 110%, rgba(100, 180, 255, 0.16), transparent 60%),
+    linear-gradient(180deg, #eef2fb 0%, #e3eaf5 40%, #d8e2f0 100%);
   background-attachment: fixed;
   position: relative;
 }
 
+/* 暗色模式：深邃的系统级背景 */
 html[data-theme='dark'] body {
   background:
-    radial-gradient(1200px circle at -6% -16%, rgba(10, 132, 255, 0.26), transparent 52%),
-    radial-gradient(900px circle at 108% 6%, rgba(100, 210, 255, 0.14), transparent 58%),
-    linear-gradient(180deg, #171c24 0%, #11161d 45%, #0d1218 100%);
+    radial-gradient(1400px circle at -4% -14%, rgba(10, 132, 255, 0.28), transparent 50%),
+    radial-gradient(1000px circle at 110% 4%, rgba(100, 210, 255, 0.16), transparent 56%),
+    radial-gradient(600px circle at 50% 110%, rgba(10, 80, 180, 0.12), transparent 60%),
+    linear-gradient(180deg, #161b23 0%, #101520 40%, #0c1018 100%);
 }
 
+/* 墨水主题 */
 html[data-theme='ink'] body {
   background:
-    radial-gradient(1200px circle at -6% -20%, rgba(92, 107, 192, 0.3), transparent 52%),
-    radial-gradient(950px circle at 108% 8%, rgba(122, 162, 255, 0.2), transparent 58%),
-    linear-gradient(180deg, #f4f5fb 0%, #e8eaf2 45%, #d8dce9 100%);
+    radial-gradient(1200px circle at -6% -20%, rgba(92, 107, 192, 0.32), transparent 52%),
+    radial-gradient(950px circle at 108% 8%, rgba(122, 162, 255, 0.22), transparent 58%),
+    linear-gradient(180deg, #f0f2fa 0%, #e6e9f2 45%, #d6dae9 100%);
 }
 
+/*
+  天青墨纸主题 — 宣纸质感背景
+  参考：宋代汝窑天青釉 + 米汤白纸 + 徽墨光晕
+  - 主光晕：天青色（#5B9FA8）→ 如"雨过天晴云破处，者般颜色做将来"
+  - 辅光晕：竹叶绿（#6DAD7A）→ 右下角自然感
+  - 底色：米汤白暖调（#EEE8DC～#F2EDE3）
+*/
+html[data-theme='celadon'] body {
+  background:
+    radial-gradient(1400px circle at -5% -18%, rgba(91, 159, 168, 0.36), transparent 52%),
+    radial-gradient(900px circle at 110% 6%, rgba(109, 173, 122, 0.22), transparent 56%),
+    radial-gradient(700px circle at 50% 108%, rgba(91, 159, 168, 0.14), transparent 58%),
+    linear-gradient(180deg, #ece6d9 0%, #f0ebe0 35%, #e8e0d2 100%);
+}
+
+/* 全局噪声纹理遮罩 —— 模拟铝/玻璃质感，防止色带 */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.015;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23grain)'/%3E%3C/svg%3E");
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
 }
 
 #root {
@@ -58,29 +80,36 @@ body::before {
   box-sizing: border-box;
 }
 
+/* macOS 风格超细滚动条 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(127, 134, 153, 0.14);
-  border-radius: var(--radius-pill);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(93, 103, 128, 0.38);
+  background: rgba(93, 103, 128, 0.28);
   border-radius: var(--radius-pill);
+  border: 1.5px solid transparent;
+  background-clip: content-box;
   transition: background var(--motion-duration-base) var(--motion-easing-standard);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(69, 79, 103, 0.58);
+  background: rgba(69, 79, 103, 0.48);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(93, 103, 128, 0.42) rgba(127, 134, 153, 0.14);
+  scrollbar-color: rgba(93, 103, 128, 0.32) transparent;
 }
 
 @media (max-width: 768px) {

@@ -1,7 +1,7 @@
 import type { ThemeConfig } from 'antd';
 import tokens from './generated/tokens.json';
 
-export type ThemeId = 'default' | 'dark' | 'ink';
+export type ThemeId = 'default' | 'dark' | 'ink' | 'celadon';
 
 type ThemeTokens = Record<string, string>;
 
@@ -73,6 +73,7 @@ export const antdThemeMap: Record<ThemeId, ThemeConfig> = {
   default: createThemeConfig('default'),
   dark: createThemeConfig('dark'),
   ink: createThemeConfig('ink'),
+  celadon: createThemeConfig('celadon'),
 };
 
 export const getAntdThemeConfig = (themeId: string): ThemeConfig =>

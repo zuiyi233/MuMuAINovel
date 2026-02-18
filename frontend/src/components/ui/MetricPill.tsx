@@ -7,23 +7,19 @@ export interface MetricPillProps {
 }
 
 export function MetricPill({ label, value, tone = 'neutral' }: MetricPillProps) {
-  const color = tone === 'primary' ? 'var(--color-primary)' : 'var(--color-text-primary)';
-  const bg = tone === 'primary' ? 'var(--color-info-bg)' : 'var(--color-bg-layout)';
+  const isPrimary = tone === 'primary';
 
   return (
     <div
-      className="macos-metric-pill"
-      style={{
-        padding: 'var(--space-xs) var(--space-sm)',
-        borderRadius: 'var(--radius-pill)',
-        background: bg,
-        display: 'inline-flex',
-        alignItems: 'baseline',
-        gap: 'var(--space-xs)',
-      }}
+      className={[
+        'macos-metric-pill',
+        isPrimary ? 'macos-metric-pill--primary' : 'macos-metric-pill--neutral',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
-      <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{label}</span>
-      <span style={{ fontWeight: 600, color }}>{value}</span>
+      <span className="macos-metric-pill__label">{label}</span>
+      <span className="macos-metric-pill__value">{value}</span>
     </div>
   );
 }

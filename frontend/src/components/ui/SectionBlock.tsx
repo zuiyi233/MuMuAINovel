@@ -12,7 +12,7 @@ export function SectionBlock({ title, description, actions, children }: SectionB
     <section
       className="macos-section-block"
       style={{
-        borderRadius: 'calc(var(--radius-lg) + 2px)',
+        borderRadius: 'var(--radius-xl)',
       }}
     >
       {(title || actions || description) && (

@@ -17,7 +17,7 @@ export function PageHeader({ title, subtitle, actions, metrics, compact = false 
       style={{
         marginBottom: 'var(--space-md)',
         padding: spacing,
-        borderRadius: 'calc(var(--radius-lg) + 2px)',
+        borderRadius: 'var(--radius-xl)',
       }}
     >
       <div className="u-flex-between" style={{ gap: 'var(--space-md)' }}>

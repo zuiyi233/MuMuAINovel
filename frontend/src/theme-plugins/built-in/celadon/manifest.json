@@ -1,0 +1,9 @@
+{
+  "id": "celadon",
+  "name": "天青墨纸",
+  "description": "天青色为主调，米汤白为底，墨色为文。专为长时间写作设计，参考主流笔记软件的护眼配色",
+  "version": "1.0.0",
+  "author": "MuMuAI Team",
+  "tags": ["light", "chinese", "celadon", "writing", "warm"],
+  "preview": "#5B9FA8"
+}
