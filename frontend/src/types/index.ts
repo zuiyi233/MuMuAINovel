@@ -38,6 +38,15 @@ export interface SettingsUpdate {
   preferences?: string;
 }
 
+export interface AppRuntimeConfig {
+  app_display_name: string;
+  sponsor_config: string;
+  changelog_repo_owner: string;
+  changelog_repo_name: string;
+  changelog_repo_branch: string;
+  changelog_repo_url: string;
+}
+
 export interface SkillSpecResponse {
   skill_key: string;
   name: string;

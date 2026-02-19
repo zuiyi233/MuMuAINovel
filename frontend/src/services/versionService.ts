@@ -31,8 +31,12 @@ function compareVersion(v1: string, v2: string): number {
  */
 export async function checkLatestVersion(): Promise<VersionCheckResult> {
   try {
+    const repoMatch = VERSION_INFO.githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+    const repoOwner = repoMatch?.[1] || 'zuiyi233';
+    const repoName = repoMatch?.[2] || 'MuMuAINovel';
+
     // 使用 shields.io 的 GitHub release badge API
-    const badgeUrl = 'https://img.shields.io/github/v/release/xiamuceer-j/MuMuAINovel';
+    const badgeUrl = `https://img.shields.io/github/v/release/${repoOwner}/${repoName}`;
     
     const response = await fetch(badgeUrl, {
       method: 'GET',
@@ -63,7 +67,7 @@ export async function checkLatestVersion(): Promise<VersionCheckResult> {
         return {
           hasUpdate,
           latestVersion,
-          releaseUrl: `https://github.com/xiamuceer-j/MuMuAINovel/releases/tag/v${latestVersion}`,
+          releaseUrl: `${VERSION_INFO.githubUrl}/releases/tag/v${latestVersion}`,
         };
       }
     }

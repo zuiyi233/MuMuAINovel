@@ -17,7 +17,8 @@ from app.models.settings import Settings
 from app.schemas.settings import (
     SettingsCreate, SettingsUpdate, SettingsResponse,
     APIKeyPreset, APIKeyPresetConfig, PresetCreateRequest,
-    PresetUpdateRequest, PresetResponse, PresetListResponse
+    PresetUpdateRequest, PresetResponse, PresetListResponse,
+    AppRuntimeConfigResponse
 )
 from app.user_manager import User
 from app.logger import get_logger
@@ -42,6 +43,19 @@ def read_env_defaults() -> Dict[str, Any]:
         "temperature": app_settings.default_temperature,
         "max_tokens": app_settings.default_max_tokens,
     }
+
+
+@router.get("/runtime-config", response_model=AppRuntimeConfigResponse)
+async def get_runtime_config():
+    """获取前端只读运行时配置。"""
+    return AppRuntimeConfigResponse(
+        app_display_name=app_settings.app_display_name,
+        sponsor_config=app_settings.sponsor_config,
+        changelog_repo_owner=app_settings.changelog_repo_owner,
+        changelog_repo_name=app_settings.changelog_repo_name,
+        changelog_repo_branch=app_settings.changelog_repo_branch,
+        changelog_repo_url=app_settings.changelog_repo_url,
+    )
 
 
 def apply_vector_embedding_from_preferences(settings: Settings) -> None:

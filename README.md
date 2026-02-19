@@ -1,4 +1,4 @@
-# MuMuAINovel 📚✨
+# 喵喵小说家 📚✨
 
 <div align="center">
 
@@ -152,7 +152,7 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/xiamuceer-j/MuMuAINovel.git
+git clone https://github.com/zuiyi233/MuMuAINovel.git
 cd MuMuAINovel
 
 # 2. 配置环境变量（必需）
@@ -550,11 +550,7 @@ MuMuAINovel/
 
 ### 贡献者
 
-感谢所有为本项目做出贡献的开发者！
-
-<a href="https://github.com/xiamuceer-j/MuMuAINovel/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=xiamuceer-j/MuMuAINovel" />
-</a>
+欢迎通过 Issue 和 Pull Request 参与贡献。
 
 ## 📝 许可证
 
@@ -564,7 +560,6 @@ MuMuAINovel/
 - ✅ 可自由使用、修改和分发
 - ✅ 可用于商业目的
 - 📝 必须开源修改版本
-- 📝 必须保留原作者版权
 - 📝 衍生作品必须使用 GPL v3 协议
 
 ## 🙏 致谢
@@ -576,7 +571,7 @@ MuMuAINovel/
 
 ## 📧 联系方式
 
-- 提交 [Issue](https://github.com/xiamuceer-j/MuMuAINovel/issues)
+- 提交 [Issue](https://github.com/zuiyi233/MuMuAINovel/issues)
 - Linux DO [讨论](https://linux.do/t/topic/1106333)
 - 加入QQ群 [QQ群](frontend/public/qq.jpg)
 - 加入WX群 [WX群](frontend/public/WX.png)
@@ -591,16 +586,6 @@ Made with ❤️
 
 </div>
 
-## Star History
+## 项目统计
 
-<a href="https://www.star-history.com/#xiamuceer-j/MuMuAINovel&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=xiamuceer-j/MuMuAINovel&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=xiamuceer-j/MuMuAINovel&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=xiamuceer-j/MuMuAINovel&type=date&legend=top-left" />
- </picture>
-</a>
-
-## History
-
-![Alt](https://repobeats.axiom.co/api/embed/ee7141a5f269c64759302e067abe23b46796bafe.svg "Repobeats analytics image")
+可在仓库 Insights 页面查看贡献与提交趋势。

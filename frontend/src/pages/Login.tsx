@@ -453,7 +453,7 @@ export default function Login() {
                 />
                 <img
                   src="/logo.svg"
-                  alt="MuMuAINovel"
+                  alt="喵喵小说家"
                   style={{
                     width: 44,
                     height: 44,
@@ -551,7 +551,7 @@ export default function Login() {
                 letterSpacing: 0.01,
               }}
             >
-              MuMuAINovel · AI 驱动的智能小说创作平台
+              喵喵小说家 · AI 驱动的智能小说创作平台
             </span>
           </div>
         </div>

@@ -35,9 +35,11 @@ export interface ChangelogEntry {
   scope?: string;
 }
 
-const GITHUB_API_BASE = 'https://api.github.com';
-const REPO_OWNER = 'xiamuceer-j';
-const REPO_NAME = 'MuMuAINovel';
+interface ChangelogApiResponse {
+  commits: GitHubCommit[];
+  cached: boolean;
+  cache_time?: string | null;
+}
 
 /**
  * 提交类型映射表
@@ -152,7 +154,7 @@ function parseCommitType(message: string): { type: ChangelogEntry['type']; scope
  */
 export async function fetchGitHubCommits(page: number = 1, perPage: number = 30): Promise<GitHubCommit[]> {
   try {
-    const url = `${GITHUB_API_BASE}/repos/${REPO_OWNER}/${REPO_NAME}/commits?author=${REPO_OWNER}&page=${page}&per_page=${perPage}`;
+    const url = `/api/changelog?page=${page}&per_page=${perPage}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -166,9 +168,10 @@ export async function fetchGitHubCommits(page: number = 1, perPage: number = 30)
       throw new Error(`GitHub API 请求失败: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json() as ChangelogApiResponse;
+    return data.commits || [];
   } catch (error) {
-    console.error('获取 GitHub 提交历史失败:', error);
+    console.error('获取更新日志失败:', error);
     throw error;
   }
 }

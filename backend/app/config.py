@@ -26,11 +26,21 @@ class Settings(BaseSettings):
     
     # 应用配置
     app_name: str = "MuMuAINovel"
+    app_display_name: str = "喵喵小说家"
     app_version: str = "1.0.0"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     debug: bool = True
-    
+
+    # 赞助配置占位符（可在 config.py 中配置自定义赞助信息）
+    sponsor_config: str = "{sponsor_config}"
+
+    # 更新日志数据源配置（用于替换硬编码仓库信息）
+    changelog_repo_owner: str = "zuiyi233"
+    changelog_repo_name: str = "MuMuAINovel"
+    changelog_repo_branch: str = "custom/main"
+    changelog_repo_url: str = "https://github.com/zuiyi233/MuMuAINovel"
+
     # 日志配置
     log_level: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     log_to_file: bool = True  # 是否输出到文件

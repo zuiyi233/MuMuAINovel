@@ -168,7 +168,7 @@ export default function AppFooter({ sidebarWidth = 0 }: AppFooterProps) {
             <Text style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--color-text-secondary)' }}>
               <span>Made with</span>
               <HeartFilled style={{ color: 'var(--color-error)' }} />
-              <span>by {VERSION_INFO.author}</span>
+              <span>{VERSION_INFO.author}</span>
             </Text>
           </Space>
         )}

@@ -29,6 +29,7 @@ import type {
   GenerateOutlineResponse,
   Settings,
   SettingsUpdate,
+  AppRuntimeConfig,
   WritingStyle,
   WritingStyleCreate,
   WritingStyleUpdate,
@@ -185,6 +186,8 @@ export const userApi = {
 
 export const settingsApi = {
   getSettings: () => api.get<unknown, Settings>('/settings'),
+
+  getRuntimeConfig: () => api.get<unknown, AppRuntimeConfig>('/settings/runtime-config'),
 
   saveSettings: (data: SettingsUpdate) =>
     api.post<unknown, Settings>('/settings', data),

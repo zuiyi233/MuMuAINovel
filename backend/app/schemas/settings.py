@@ -94,3 +94,20 @@ class PresetListResponse(BaseModel):
     presets: List[PresetResponse] = Field(..., description="预设列表")
     total: int = Field(..., description="总数")
     active_preset_id: Optional[str] = Field(None, description="当前激活的预设ID")
+
+class AppRuntimeConfigResponse(BaseModel):
+    """应用运行时配置响应（前端只读）"""
+    model_config = ConfigDict(protected_namespaces=())
+
+    app_display_name: str = Field(default="喵喵小说家", description="应用展示名称")
+    sponsor_config: str = Field(
+        default="{sponsor_config}",
+        description="赞助配置占位符，可在 config.py 中配置自定义赞助信息",
+    )
+    changelog_repo_owner: str = Field(default="zuiyi233", description="更新日志仓库 owner")
+    changelog_repo_name: str = Field(default="MuMuAINovel", description="更新日志仓库名")
+    changelog_repo_branch: str = Field(default="custom/main", description="更新日志分支")
+    changelog_repo_url: str = Field(
+        default="https://github.com/zuiyi233/MuMuAINovel",
+        description="更新日志仓库地址",
+    )
