@@ -126,14 +126,16 @@ export class SSEPostClient {
   private url: string;
   private data: any;
   private options: SSEClientOptions;
+  private headers: Record<string, string>;
   private abortController: AbortController | null = null;
   private accumulatedContent: string = '';
   private resultData: any = null;
 
-  constructor(url: string, data: any, options: SSEClientOptions = {}) {
+  constructor(url: string, data: any, options: SSEClientOptions = {}, headers: Record<string, string> = {}) {
     this.url = url;
     this.data = data;
     this.options = options;
+    this.headers = headers;
   }
 
   async connect(): Promise<any> {
@@ -146,11 +148,14 @@ export class SSEPostClient {
       try {
         this.abortController = new AbortController();
 
+        const requestHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...this.headers,
+        };
+
         const response = await fetch(this.url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: requestHeaders,
           body: JSON.stringify(this.data),
           signal: this.abortController.signal,
         });
@@ -278,9 +283,10 @@ export class SSEPostClient {
 export async function ssePost<T = any>(
   url: string,
   data: any,
-  options: SSEClientOptions = {}
+  options: SSEClientOptions = {},
+  headers: Record<string, string> = {}
 ): Promise<T> {
-  const client = new SSEPostClient(url, data, options);
+  const client = new SSEPostClient(url, data, options, headers);
   try {
     return await client.connect();
   } finally {

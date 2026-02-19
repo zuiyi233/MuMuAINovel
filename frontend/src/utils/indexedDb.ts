@@ -1,5 +1,5 @@
 export const DB_NAME = 'mumu_ai_novel_local';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export const STORE_NAMES = {
   meta: 'meta',
@@ -11,6 +11,7 @@ export const STORE_NAMES = {
   organizationMembers: 'organization_members',
   relationships: 'relationships',
   foreshadows: 'foreshadows',
+  localSkills: 'local_skills',
 } as const;
 
 export type StoreName = (typeof STORE_NAMES)[keyof typeof STORE_NAMES];
@@ -105,6 +106,12 @@ const buildSchemaV2 = (db: IDBDatabase, tx: IDBTransaction): void => {
   ensureIndex(foreshadows, 'by_browser_project_plantChapter', ['browser_id', 'project_id', 'plant_chapter_number']);
 };
 
+const buildSchemaV3 = (db: IDBDatabase, tx: IDBTransaction): void => {
+  const localSkills = ensureStore(db, tx, STORE_NAMES.localSkills, ENTITY_KEY_PATH);
+  ensureIndex(localSkills, 'by_browser_updated', ['browser_id', 'updated_at']);
+  ensureIndex(localSkills, 'by_browser_hash', ['browser_id', 'hash']);
+};
+
 export const openIndexedDb = async (): Promise<IDBDatabase> => {
   if (!isIndexedDbSupported()) {
     throw new Error('IndexedDB is not supported in current environment');
@@ -129,6 +136,9 @@ export const openIndexedDb = async (): Promise<IDBDatabase> => {
       }
       if (oldVersion < 2) {
         buildSchemaV2(db, tx);
+      }
+      if (oldVersion < 3) {
+        buildSchemaV3(db, tx);
       }
     };
 

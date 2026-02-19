@@ -1,9 +1,10 @@
 {
-  "active_plan": "/mnt/e/MuMuAINovel-main/.sisyphus/plans/mumu-cleanup-ergonomic-ui.md",
+  "active_plan": "/mnt/e/MuMuAINovel-main/.sisyphus/plans/skills-root-and-loading-hardening.md",
   "started_at": "2026-02-18T20:23:30.420Z",
   "session_ids": [
-    "ses_38db27d2bffebWgBm62BTxdE8b"
+    "ses_38db27d2bffebWgBm62BTxdE8b",
+    "ses_38b5dad3cffeAT3FlwguwgJfvU"
   ],
-  "plan_name": "mumu-cleanup-ergonomic-ui",
+  "plan_name": "skills-root-and-loading-hardening",
   "agent": "atlas"
 }

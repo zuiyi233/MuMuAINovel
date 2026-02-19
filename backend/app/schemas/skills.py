@@ -26,6 +26,8 @@ class SkillSyncResponse(BaseModel):
     skipped: int
     errors: int
     error_messages: List[str]
+    deleted: int
+    roots_used: List[str]
 
 
 class SkillActivateRequest(BaseModel):

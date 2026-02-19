@@ -1,9 +1,15 @@
 """数据模型导出"""
+
 from app.models.project import Project
 from app.models.outline import Outline
 from app.models.chapter import Chapter
 from app.models.character import Character
-from app.models.relationship import CharacterRelationship, Organization, OrganizationMember, RelationshipType
+from app.models.relationship import (
+    CharacterRelationship,
+    Organization,
+    OrganizationMember,
+    RelationshipType,
+)
 from app.models.generation_history import GenerationHistory
 from app.models.analysis_task import AnalysisTask
 from app.models.batch_generation_task import BatchGenerationTask
@@ -17,8 +23,13 @@ from app.models.regeneration_task import RegenerationTask
 from app.models.career import Career, CharacterCareer
 from app.models.prompt_template import PromptTemplate
 from app.models.foreshadow import Foreshadow
-from app.models.prompt_workshop import PromptWorkshopItem, PromptSubmission, PromptWorkshopLike
+from app.models.prompt_workshop import (
+    PromptWorkshopItem,
+    PromptSubmission,
+    PromptWorkshopLike,
+)
 from app.models.skill_spec import SkillSpec
+from app.models.skill_sync_audit import SkillSyncAudit
 
 __all__ = [
     "Project",
@@ -49,4 +60,5 @@ __all__ = [
     "PromptSubmission",
     "PromptWorkshopLike",
     "SkillSpec",
+    "SkillSyncAudit",
 ]

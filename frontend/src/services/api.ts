@@ -2,6 +2,7 @@ import axios from 'axios';
 import { message } from 'antd';
 import { ssePost } from '../utils/sseClient';
 import type { SSEClientOptions } from '../utils/sseClient';
+import { getActiveLocalSkillId, localSkills } from '../utils/localSkillsDb';
 import type {
   User,
   AuthUrlResponse,
@@ -58,6 +59,41 @@ interface MCPPluginSimpleCreate {
   config_json: string;
   enabled: boolean;
 }
+
+interface LocalSkillTransport {
+  headers: Record<string, string>;
+  local_skill_prompt: string;
+}
+
+const getLocalSkillTransport = async (): Promise<LocalSkillTransport | null> => {
+  try {
+    const activeId = await getActiveLocalSkillId();
+    if (!activeId) {
+      return null;
+    }
+
+    const skill = await localSkills.get(activeId);
+    if (!skill || !skill.content || skill.content.trim() === '') {
+      return null;
+    }
+
+    const headers: Record<string, string> = {
+      'X-MuMu-Local-Skill-Id': skill.id,
+    };
+
+    if (skill.hash) {
+      headers['X-MuMu-Local-Skill-Sha256'] = skill.hash;
+    }
+
+    return {
+      headers,
+      local_skill_prompt: skill.content,
+    };
+  } catch {
+    // Fail closed - if anything goes wrong, don't inject local skill
+    return null;
+  }
+};
 
 const api = axios.create({
   baseURL: '/api',
@@ -400,8 +436,13 @@ export const outlineApi = {
   reorderOutlines: (data: OutlineReorderRequest) =>
     api.post<unknown, { message: string; updated_outlines: number; updated_chapters: number }>('/outlines/reorder', data),
 
-  generateOutline: (data: GenerateOutlineRequest) =>
-    api.post<unknown, { total: number; items: Outline[] }>('/outlines/generate', data).then(res => res.items),
+  generateOutline: async (data: GenerateOutlineRequest) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return api.post<unknown, { total: number; items: Outline[] }>('/outlines/generate', requestData, {
+      headers: transport?.headers,
+    }).then(res => res.items);
+  },
 
   // 获取大纲关联的章节
   getOutlineChapters: (outlineId: string) =>
@@ -497,8 +538,13 @@ export const characterApi = {
 
   deleteCharacter: (id: string) => api.delete(`/characters/${id}`),
 
-  generateCharacter: (data: GenerateCharacterRequest) =>
-    api.post<unknown, Character>('/characters/generate', data),
+  generateCharacter: async (data: GenerateCharacterRequest) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return api.post<unknown, Character>('/characters/generate', requestData, {
+      headers: transport?.headers,
+    });
+  },
 
   // 导出角色/组织
   exportCharacters: async (characterIds: string[]) => {
@@ -609,7 +655,7 @@ export const chapterApi = {
     }>(`/chapters/${chapterId}/regeneration/tasks`, { params: { limit } }),
 
   // 局部重写相关
-  partialRegenerateStream: (
+  partialRegenerateStream: async (
     chapterId: string,
     data: {
       selected_text: string;
@@ -622,17 +668,22 @@ export const chapterApi = {
       target_word_count?: number;
     },
     options?: SSEClientOptions
-  ) => ssePost<{
-    new_text: string;
-    word_count: number;
-    original_word_count: number;
-    start_position: number;
-    end_position: number;
-  }>(
-    `/api/chapters/${chapterId}/partial-regenerate-stream`,
-    data,
-    options
-  ),
+  ) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return ssePost<{
+      new_text: string;
+      word_count: number;
+      original_word_count: number;
+      start_position: number;
+      end_position: number;
+    }>(
+      `/api/chapters/${chapterId}/partial-regenerate-stream`,
+      requestData,
+      options,
+      transport?.headers
+    );
+  },
 
   applyPartialRegenerate: (chapterId: string, data: {
     new_text: string;
@@ -784,30 +835,43 @@ export const promptWorkshopApi = {
 };
 
 export const polishApi = {
-  polishText: (data: PolishTextRequest) =>
-    api.post<unknown, { polished_text: string }>('/polish', data),
+  polishText: async (data: PolishTextRequest) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return api.post<unknown, { polished_text: string }>('/polish', requestData, {
+      headers: transport?.headers,
+    });
+  },
 
-  polishBatch: (texts: string[]) =>
-    api.post<unknown, { polished_texts: string[] }>('/polish/batch', { texts }),
+  polishBatch: async (texts: string[]) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { texts, local_skill_prompt: transport.local_skill_prompt } : { texts };
+    return api.post<unknown, { polished_texts: string[] }>('/polish/batch', requestData, {
+      headers: transport?.headers,
+    });
+  },
 };
 export const inspirationApi = {
-  // 生成选项建议
-  generateOptions: (data: {
+  generateOptions: async (data: {
     step: 'title' | 'description' | 'theme' | 'genre';
     context: {
       title?: string;
       description?: string;
       theme?: string;
     };
-  }) =>
-    api.post<unknown, {
+  }) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return api.post<unknown, {
       prompt?: string;
       options: string[];
       error?: string;
-    }>('/inspiration/generate-options', data),
+    }>('/inspiration/generate-options', requestData, {
+      headers: transport?.headers,
+    });
+  },
 
-  // 基于用户反馈重新生成选项（新增）
-  refineOptions: (data: {
+  refineOptions: async (data: {
     step: 'title' | 'description' | 'theme' | 'genre';
     context: {
       initial_idea?: string;
@@ -817,34 +881,43 @@ export const inspirationApi = {
     };
     feedback: string;
     previous_options?: string[];
-  }) =>
-    api.post<unknown, {
+  }) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return api.post<unknown, {
       prompt?: string;
       options: string[];
       error?: string;
-    }>('/inspiration/refine-options', data),
+    }>('/inspiration/refine-options', requestData, {
+      headers: transport?.headers,
+    });
+  },
 
-  // 智能补全缺失信息
-  quickGenerate: (data: {
+  quickGenerate: async (data: {
     title?: string;
     description?: string;
     theme?: string;
     genre?: string | string[];
-  }) =>
-    api.post<unknown, {
+  }) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return api.post<unknown, {
       title: string;
       description: string;
       theme: string;
       genre: string[];
       narrative_perspective: string;
-    }>('/inspiration/quick-generate', data),
+    }>('/inspiration/quick-generate', requestData, {
+      headers: transport?.headers,
+    });
+  },
 };
 
 export default api;
 
 
 export const wizardStreamApi = {
-  generateWorldBuildingStream: (
+  generateWorldBuildingStream: async (
     data: {
       title: string;
       description: string;
@@ -854,18 +927,23 @@ export const wizardStreamApi = {
       target_words?: number;
       chapter_count?: number;
       character_count?: number;
-      outline_mode?: 'one-to-one' | 'one-to-many';  // 添加大纲模式参数
+      outline_mode?: 'one-to-one' | 'one-to-many';
       provider?: string;
       model?: string;
     },
     options?: SSEClientOptions
-  ) => ssePost<WorldBuildingResponse>(
-    '/api/wizard-stream/world-building',
-    data,
-    options
-  ),
+  ) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return ssePost<WorldBuildingResponse>(
+      '/api/wizard-stream/world-building',
+      requestData,
+      options,
+      transport?.headers
+    );
+  },
 
-  generateCharactersStream: (
+  generateCharactersStream: async (
     data: {
       project_id: string;
       count?: number;
@@ -877,32 +955,42 @@ export const wizardStreamApi = {
       model?: string;
     },
     options?: SSEClientOptions
-  ) => ssePost<GenerateCharactersResponse>(
-    '/api/wizard-stream/characters',
-    data,
-    options
-  ),
+  ) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return ssePost<GenerateCharactersResponse>(
+      '/api/wizard-stream/characters',
+      requestData,
+      options,
+      transport?.headers
+    );
+  },
 
-  generateCareerSystemStream: (
+  generateCareerSystemStream: async (
     data: {
       project_id: string;
       provider?: string;
       model?: string;
     },
     options?: SSEClientOptions
-  ) => ssePost<{
-    project_id: string;
-    main_careers_count: number;
-    sub_careers_count: number;
-    main_careers: string[];
-    sub_careers: string[];
-  }>(
-    '/api/wizard-stream/career-system',
-    data,
-    options
-  ),
+  ) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return ssePost<{
+      project_id: string;
+      main_careers_count: number;
+      sub_careers_count: number;
+      main_careers: string[];
+      sub_careers: string[];
+    }>(
+      '/api/wizard-stream/career-system',
+      requestData,
+      options,
+      transport?.headers
+    );
+  },
 
-  generateCompleteOutlineStream: (
+  generateCompleteOutlineStream: async (
     data: {
       project_id: string;
       chapter_count: number;
@@ -913,13 +1001,18 @@ export const wizardStreamApi = {
       model?: string;
     },
     options?: SSEClientOptions
-  ) => ssePost<GenerateOutlineResponse>(
-    '/api/wizard-stream/outline',
-    data,
-    options
-  ),
+  ) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return ssePost<GenerateOutlineResponse>(
+      '/api/wizard-stream/outline',
+      requestData,
+      options,
+      transport?.headers
+    );
+  },
 
-  updateWorldBuildingStream: (
+  updateWorldBuildingStream: async (
     projectId: string,
     data: {
       time_period?: string;
@@ -928,33 +1021,45 @@ export const wizardStreamApi = {
       rules?: string;
     },
     options?: SSEClientOptions
-  ) => ssePost<WorldBuildingResponse>(
-    `/api/wizard-stream/world-building/${projectId}`,
-    data,
-    options
-  ),
+  ) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...data, local_skill_prompt: transport.local_skill_prompt } : data;
+    return ssePost<WorldBuildingResponse>(
+      `/api/wizard-stream/world-building/${projectId}`,
+      requestData,
+      options,
+      transport?.headers
+    );
+  },
 
-  regenerateWorldBuildingStream: (
+  regenerateWorldBuildingStream: async (
     projectId: string,
     data?: {
       provider?: string;
       model?: string;
     },
     options?: SSEClientOptions
-  ) => ssePost<WorldBuildingResponse>(
-    `/api/wizard-stream/world-building/${projectId}/regenerate`,
-    data || {},
-    options
-  ),
+  ) => {
+    const transport = await getLocalSkillTransport();
+    const requestData = transport ? { ...(data || {}), local_skill_prompt: transport.local_skill_prompt } : (data || {});
+    return ssePost<WorldBuildingResponse>(
+      `/api/wizard-stream/world-building/${projectId}/regenerate`,
+      requestData,
+      options,
+      transport?.headers
+    );
+  },
 
-  cleanupWizardDataStream: (
+  cleanupWizardDataStream: async (
     projectId: string,
     options?: SSEClientOptions
-  ) => ssePost<{ message: string; deleted: { characters: number; outlines: number; chapters: number } }>(
-    `/api/wizard-stream/cleanup/${projectId}`,
-    {},
-    options
-  ),
+  ) => {
+    return ssePost<{ message: string; deleted: { characters: number; outlines: number; chapters: number } }>(
+      `/api/wizard-stream/cleanup/${projectId}`,
+      {},
+      options
+    );
+  },
 };
 
 export const mcpPluginApi = {

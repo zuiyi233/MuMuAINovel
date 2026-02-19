@@ -1,1 +1,3 @@
 # LFS tracking removed - models downloaded from HuggingFace at runtime
+# Ensure JSON files use LF line endings
+.sisyphus/boulder.json text eol=lf
